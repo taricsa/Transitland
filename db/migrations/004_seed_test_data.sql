@@ -1,6 +1,15 @@
 -- Transitland Fleet OS - Test Data Seed Script
 -- This script creates test accounts for each persona
--- Run this AFTER creating auth users in Supabase Dashboard or via API
+-- 
+-- PREREQUISITE: Create auth users FIRST in Supabase Dashboard:
+--   1. Go to Authentication > Users > Add User
+--   2. Create users with these credentials:
+--      - mechanic@transitland.test / TestMechanic123!
+--      - ops@transitland.test / TestOps123!
+--      - clerk@transitland.test / TestClerk123!
+--      - driver@transitland.test / TestDriver123!
+--   3. Make sure "Auto Confirm User" is checked for each
+--   4. Then run this script - it will automatically find users by email
 
 -- Step 1: Create a test garage (if it doesn't exist)
 INSERT INTO garages (id, name, total_bays, timezone, address)
@@ -8,33 +17,21 @@ VALUES
   ('00000000-0000-0000-0000-000000000001', 'Main Transit Garage', 12, 'America/New_York', '123 Main St, Transit City, ST 12345')
 ON CONFLICT (id) DO NOTHING;
 
--- Step 2: Create user records in the users table
--- NOTE: You must create auth users FIRST in Supabase Dashboard (Authentication > Users > Add User)
--- Or use the Supabase Management API to create users
--- Then update the UUIDs below with the actual auth user IDs
-
--- IMPORTANT: Replace the UUIDs below with actual auth.users IDs after creating them in Supabase Dashboard
--- To get the auth user ID: Go to Authentication > Users, create user, copy the UUID
-
 -- ============================================================================
 -- MECHANIC PERSONA
 -- ============================================================================
--- 1. Create auth user in Supabase Dashboard:
---    Email: mechanic@transitland.test
---    Password: TestMechanic123!
---    Copy the user UUID and replace 'MECHANIC_AUTH_UUID' below
-
+-- Automatically finds auth user by email and creates user record
 INSERT INTO users (id, auth_id, role, garage_id, name, email, phone)
-VALUES 
-  (
-    'MECHANIC_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'MECHANIC_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'mechanic',
-    '00000000-0000-0000-0000-000000000001',
-    'John Mechanic',
-    'mechanic@transitland.test',
-    '555-0101'
-  )
+SELECT 
+  au.id,
+  au.id,
+  'mechanic',
+  '00000000-0000-0000-0000-000000000001',
+  'John Mechanic',
+  'mechanic@transitland.test',
+  '555-0101'
+FROM auth.users au
+WHERE au.email = 'mechanic@transitland.test'
 ON CONFLICT (id) DO UPDATE SET
   role = EXCLUDED.role,
   garage_id = EXCLUDED.garage_id,
@@ -45,12 +42,12 @@ ON CONFLICT (id) DO UPDATE SET
 -- Create mechanic profile
 INSERT INTO mechanics (user_id, specialty, shift_pattern, certification_level)
 SELECT 
-  id,
+  u.id,
   'General Maintenance',
   'Day Shift',
   'ASE Certified'
-FROM users
-WHERE email = 'mechanic@transitland.test'
+FROM users u
+WHERE u.email = 'mechanic@transitland.test'
 ON CONFLICT (user_id) DO UPDATE SET
   specialty = EXCLUDED.specialty,
   shift_pattern = EXCLUDED.shift_pattern,
@@ -59,22 +56,17 @@ ON CONFLICT (user_id) DO UPDATE SET
 -- ============================================================================
 -- OPS MANAGER PERSONA
 -- ============================================================================
--- 2. Create auth user in Supabase Dashboard:
---    Email: ops@transitland.test
---    Password: TestOps123!
---    Copy the user UUID and replace 'OPS_MANAGER_AUTH_UUID' below
-
 INSERT INTO users (id, auth_id, role, garage_id, name, email, phone)
-VALUES 
-  (
-    'OPS_MANAGER_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'OPS_MANAGER_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'ops_manager',
-    '00000000-0000-0000-0000-000000000001',
-    'Sarah Operations',
-    'ops@transitland.test',
-    '555-0102'
-  )
+SELECT 
+  au.id,
+  au.id,
+  'ops_manager',
+  '00000000-0000-0000-0000-000000000001',
+  'Sarah Operations',
+  'ops@transitland.test',
+  '555-0102'
+FROM auth.users au
+WHERE au.email = 'ops@transitland.test'
 ON CONFLICT (id) DO UPDATE SET
   role = EXCLUDED.role,
   garage_id = EXCLUDED.garage_id,
@@ -85,22 +77,17 @@ ON CONFLICT (id) DO UPDATE SET
 -- ============================================================================
 -- PARTS CLERK PERSONA
 -- ============================================================================
--- 3. Create auth user in Supabase Dashboard:
---    Email: clerk@transitland.test
---    Password: TestClerk123!
---    Copy the user UUID and replace 'PARTS_CLERK_AUTH_UUID' below
-
 INSERT INTO users (id, auth_id, role, garage_id, name, email, phone)
-VALUES 
-  (
-    'PARTS_CLERK_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'PARTS_CLERK_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'parts_clerk',
-    '00000000-0000-0000-0000-000000000001',
-    'Mike Parts',
-    'clerk@transitland.test',
-    '555-0103'
-  )
+SELECT 
+  au.id,
+  au.id,
+  'parts_clerk',
+  '00000000-0000-0000-0000-000000000001',
+  'Mike Parts',
+  'clerk@transitland.test',
+  '555-0103'
+FROM auth.users au
+WHERE au.email = 'clerk@transitland.test'
 ON CONFLICT (id) DO UPDATE SET
   role = EXCLUDED.role,
   garage_id = EXCLUDED.garage_id,
@@ -111,22 +98,17 @@ ON CONFLICT (id) DO UPDATE SET
 -- ============================================================================
 -- DRIVER PERSONA
 -- ============================================================================
--- 4. Create auth user in Supabase Dashboard:
---    Email: driver@transitland.test
---    Password: TestDriver123!
---    Copy the user UUID and replace 'DRIVER_AUTH_UUID' below
-
 INSERT INTO users (id, auth_id, role, garage_id, name, email, phone)
-VALUES 
-  (
-    'DRIVER_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'DRIVER_AUTH_UUID',  -- Replace with actual auth.users.id from Supabase Dashboard
-    'driver',
-    '00000000-0000-0000-0000-000000000001',
-    'Alex Driver',
-    'driver@transitland.test',
-    '555-0104'
-  )
+SELECT 
+  au.id,
+  au.id,
+  'driver',
+  '00000000-0000-0000-0000-000000000001',
+  'Alex Driver',
+  'driver@transitland.test',
+  '555-0104'
+FROM auth.users au
+WHERE au.email = 'driver@transitland.test'
 ON CONFLICT (id) DO UPDATE SET
   role = EXCLUDED.role,
   garage_id = EXCLUDED.garage_id,
@@ -137,11 +119,11 @@ ON CONFLICT (id) DO UPDATE SET
 -- Create driver profile
 INSERT INTO drivers (user_id, license_expiry, current_vehicle_id)
 SELECT 
-  id,
+  u.id,
   (CURRENT_DATE + INTERVAL '2 years')::DATE,
   NULL
-FROM users
-WHERE email = 'driver@transitland.test'
+FROM users u
+WHERE u.email = 'driver@transitland.test'
 ON CONFLICT (user_id) DO UPDATE SET
   license_expiry = EXCLUDED.license_expiry;
 
