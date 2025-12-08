@@ -1,3 +1,6 @@
+// Note: Next.js 16 shows a deprecation warning for middleware.ts, but it's still the standard approach.
+// The "proxy" alternative mentioned in the warning is not yet documented or available.
+// This middleware is required for authentication and route protection.
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
