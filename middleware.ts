@@ -74,18 +74,19 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Redirect authenticated users away from auth pages
-  if ((request.nextUrl.pathname === '/login' || 
+  // Redirect authenticated users away from landing and auth pages
+  if ((request.nextUrl.pathname === '/' ||
+       request.nextUrl.pathname === '/login' || 
        request.nextUrl.pathname === '/register') && user) {
     // Redirect to appropriate dashboard based on role
-      const { data: userData } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+    const { data: userData } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
 
-      if (userData && 'role' in userData) {
-        const role = (userData as { role: string }).role;
+    if (userData && 'role' in userData) {
+      const role = (userData as { role: string }).role;
       const dashboardMap: Record<string, string> = {
         mechanic: '/mechanic',
         ops_manager: '/ops',
