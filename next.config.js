@@ -23,10 +23,8 @@ const nextConfig = {
   images: {
     domains: [],
   },
-  // Skip static optimization for pages that require Supabase
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
-  },
+  // Configure Turbopack for Next.js 16
+  turbopack: {},
 };
 
 module.exports = withPWA(nextConfig);

@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 const issueReportSchema = z.object({
   issue_type: z.string().min(1, 'Issue type is required'),
   description: z.string().min(1, 'Description is required'),
-  is_critical: z.boolean().default(false),
+  is_critical: z.boolean(),
 });
 
 type IssueReportFormData = z.infer<typeof issueReportSchema>;
