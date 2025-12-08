@@ -33,12 +33,13 @@ export default function DriverDashboard() {
           .single();
 
         if (driverData) {
-          setDriverId(driverData.id);
-          if (driverData.current_vehicle_id) {
+          const typedDriverData = driverData as { id: string; current_vehicle_id?: string | null };
+          setDriverId(typedDriverData.id);
+          if (typedDriverData.current_vehicle_id) {
             const { data: vehicleData } = await supabase
               .from('vehicles')
               .select('*')
-              .eq('id', driverData.current_vehicle_id)
+              .eq('id', typedDriverData.current_vehicle_id)
               .single();
             if (vehicleData) {
               setVehicle(vehicleData as Vehicle);
