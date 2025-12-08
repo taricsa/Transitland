@@ -9,7 +9,6 @@ import { WorkOrder, WorkOrderStatus } from '@/types';
 import { useWorkOrders } from '@/lib/hooks/useWorkOrders';
 import { format } from 'date-fns';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export default function WorkOrderDetailPage() {
   const params = useParams();
@@ -43,7 +42,7 @@ export default function WorkOrderDetailPage() {
     // Subscribe to real-time updates
     const channel = supabase
       .channel(`work_order_${workOrderId}`)
-      .on<WorkOrder>(
+      .on(
         'postgres_changes',
         {
           event: '*',
@@ -51,9 +50,9 @@ export default function WorkOrderDetailPage() {
           table: 'work_orders',
           filter: `id=eq.${workOrderId}`,
         },
-        (payload: RealtimePostgresChangesPayload<WorkOrder>) => {
+        (payload) => {
           if (payload.eventType === 'UPDATE' && payload.new) {
-            setWorkOrder(payload.new);
+            setWorkOrder(payload.new as WorkOrder);
           }
         }
       )
