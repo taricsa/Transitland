@@ -28,7 +28,7 @@ export class DriverReportService {
     } = await this.supabase.auth.getUser();
 
     // Create work order
-    const { data: workOrder, error: woError } = await this.supabase
+    const { data: workOrder, error: woError } = await (this.supabase as any)
       .from('work_orders')
       .insert({
         vehicle_id: report.vehicle_id,
@@ -67,7 +67,7 @@ export class DriverReportService {
       data: { user },
     } = await this.supabase.auth.getUser();
 
-    await this.supabase.from('work_order_events').insert({
+    await (this.supabase as any).from('work_order_events').insert({
       work_order_id: workOrderId,
       event_type: 'Status Change',
       user_id: user?.id,
@@ -90,7 +90,11 @@ export class DriverReportService {
       .single();
 
     if (error) throw error;
-    return data?.current_vehicle_id;
+    if (data) {
+      const typedData = data as { current_vehicle_id?: string | null };
+      return typedData.current_vehicle_id;
+    }
+    return null;
   }
 }
 

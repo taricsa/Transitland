@@ -15,7 +15,7 @@ export async function getCurrentUser() {
     .eq('id', user.id)
     .single();
 
-  return userData;
+  return userData as any;
 }
 
 export async function requireAuth() {
@@ -28,7 +28,8 @@ export async function requireAuth() {
 
 export async function requireRole(role: UserRole) {
   const user = await requireAuth();
-  if (user.role !== role) {
+  const typedUser = user as { role: UserRole };
+  if (typedUser.role !== role) {
     throw new Error('Insufficient permissions');
   }
   return user;

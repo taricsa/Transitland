@@ -67,7 +67,7 @@ export class VehicleService {
       );
     }
 
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase as any)
       .from('vehicles')
       .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', vehicleId)
@@ -79,7 +79,7 @@ export class VehicleService {
   }
 
   async assignDriver(vehicleId: string, driverId: string): Promise<Vehicle> {
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase as any)
       .from('vehicles')
       .update({
         current_driver_id: driverId,
@@ -94,7 +94,7 @@ export class VehicleService {
   }
 
   async updateOdometer(vehicleId: string, odometer: number): Promise<Vehicle> {
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase as any)
       .from('vehicles')
       .update({
         odometer,
@@ -109,7 +109,7 @@ export class VehicleService {
   }
 
   async markWinterized(vehicleId: string): Promise<Vehicle> {
-    const { data, error } = await this.supabase
+    const { data, error } = await (this.supabase as any)
       .from('vehicles')
       .update({
         winterized_bool: true,

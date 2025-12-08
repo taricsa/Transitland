@@ -36,30 +36,30 @@ export function useWorkOrders(mechanicId?: string) {
   useEffect(() => {
     loadWorkOrders();
     
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('work_orders_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'work_orders',
-          filter: mechanicId ? `assigned_mechanic_id=eq.${mechanicId}` : undefined,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setWorkOrders((prev) => [payload.new as WorkOrder, ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setWorkOrders((prev) =>
-              prev.map((wo) => (wo.id === payload.new.id ? (payload.new as WorkOrder) : wo))
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setWorkOrders((prev) => prev.filter((wo) => wo.id !== payload.old.id));
+      // Subscribe to real-time updates
+      const channel = (supabase as any)
+        .channel('work_orders_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'work_orders',
+            filter: mechanicId ? `assigned_mechanic_id=eq.${mechanicId}` : undefined,
+          },
+          (payload: any) => {
+            if (payload.eventType === 'INSERT') {
+              setWorkOrders((prev) => [payload.new as WorkOrder, ...prev]);
+            } else if (payload.eventType === 'UPDATE') {
+              setWorkOrders((prev) =>
+                prev.map((wo) => (wo.id === payload.new.id ? (payload.new as WorkOrder) : wo))
+              );
+            } else if (payload.eventType === 'DELETE') {
+              setWorkOrders((prev) => prev.filter((wo) => wo.id !== payload.old.id));
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -116,7 +116,6 @@ export function useWorkOrders(mechanicId?: string) {
         return;
       }
 
-      // @ts-expect-error - Supabase type inference issue with partial updates
       const { data, error } = await (supabase as any)
         .from('work_orders')
         .update({ ...updates, updated_at: new Date().toISOString() })

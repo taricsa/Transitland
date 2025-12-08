@@ -23,6 +23,10 @@ const nextConfig = {
   images: {
     domains: [],
   },
+  // Skip static optimization for pages that require Supabase
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
 };
 
 module.exports = withPWA(nextConfig);

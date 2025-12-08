@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -21,7 +23,7 @@ export default function WorkOrderDetailPage() {
     loadWorkOrder();
     
     // Subscribe to real-time updates
-    const channel = supabase
+    const channel = (supabase as any)
       .channel(`work_order_${workOrderId}`)
       .on(
         'postgres_changes',
@@ -31,7 +33,7 @@ export default function WorkOrderDetailPage() {
           table: 'work_orders',
           filter: `id=eq.${workOrderId}`,
         },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'UPDATE') {
             setWorkOrder(payload.new as WorkOrder);
           }

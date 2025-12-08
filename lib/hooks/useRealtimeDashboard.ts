@@ -63,8 +63,8 @@ export function useRealtimeDashboard(garageId?: string) {
           .select('id')
           .eq('garage_id', garageId);
         if (garageVehicles) {
-          const vehicleIds = garageVehicles.map((v) => ((v as unknown) as { id: string }).id);
-          workOrdersQuery = workOrdersQuery.in(
+          const vehicleIds = garageVehicles.map((v: any) => v.id);
+          workOrdersQuery = (workOrdersQuery as any).in(
             'vehicle_id',
             vehicleIds
           );
@@ -81,8 +81,8 @@ export function useRealtimeDashboard(garageId?: string) {
           .eq('garage_id', garageId)
           .eq('role', 'mechanic');
         if (usersData) {
-          const userIds = usersData.map((u) => ((u as unknown) as { id: string }).id);
-          const { data: mechanicsData } = await supabase
+          const userIds = usersData.map((u: any) => u.id);
+          const { data: mechanicsData } = await (supabase as any)
             .from('mechanics')
             .select('*')
             .in('user_id', userIds);
