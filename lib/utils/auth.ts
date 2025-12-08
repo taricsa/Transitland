@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { UserRole } from '@/types';
+import { UserRole, User } from '@/types';
 
 export async function getCurrentUser() {
   const supabase = await createClient();
@@ -15,7 +15,7 @@ export async function getCurrentUser() {
     .eq('id', user.id)
     .single();
 
-  return userData as any;
+  return userData as User | null;
 }
 
 export async function requireAuth() {
@@ -28,8 +28,7 @@ export async function requireAuth() {
 
 export async function requireRole(role: UserRole) {
   const user = await requireAuth();
-  const typedUser = user as { role: UserRole };
-  if (typedUser.role !== role) {
+  if (!user || user.role !== role) {
     throw new Error('Insufficient permissions');
   }
   return user;

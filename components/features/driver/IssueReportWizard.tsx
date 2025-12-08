@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -47,6 +47,7 @@ export function IssueReportWizard({ vehicleId, onSuccess }: IssueReportWizardPro
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<IssueReportFormData>({
     resolver: zodResolver(issueReportSchema),
     defaultValues: {
@@ -54,33 +55,24 @@ export function IssueReportWizard({ vehicleId, onSuccess }: IssueReportWizardPro
     },
   });
 
-  useState(() => {
+  useEffect(() => {
     async function getDriverId() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        const { data: userData } = await supabase
-          .from('users')
+        const { data: driverData } = await supabase
+          .from('drivers')
           .select('id')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
-        if (userData) {
-          const typedUserData = userData as { id: string };
-          const { data: driverData } = await supabase
-            .from('drivers')
-            .select('id')
-            .eq('user_id', typedUserData.id)
-            .single();
-          if (driverData) {
-            const typedDriverData = driverData as { id: string };
-            setDriverId(typedDriverData.id);
-          }
+        if (driverData) {
+          setDriverId(driverData.id);
         }
       }
     }
     getDriverId();
-  });
+  }, [supabase]);
 
   const issueType = watch('issue_type');
   const isCritical = watch('is_critical');
@@ -122,12 +114,7 @@ export function IssueReportWizard({ vehicleId, onSuccess }: IssueReportWizardPro
               key={type}
               type="button"
               onClick={() => {
-                // Set issue type and move to next step
-                const form = document.querySelector('form');
-                if (form) {
-                  const input = form.querySelector('[name="issue_type"]') as HTMLInputElement;
-                  if (input) input.value = type;
-                }
+                setValue('issue_type', type);
                 setStep(2);
               }}
               className="rounded-md border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"

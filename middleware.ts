@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
 
     // Role-based route protection
     const path = request.nextUrl.pathname;
-    const userRole = (userData as { role: string; garage_id?: string }).role;
+    const userRole = userData?.role;
 
     if (path.startsWith('/mechanic') && userRole !== 'mechanic') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
@@ -89,7 +89,7 @@ export async function middleware(request: NextRequest) {
       .single();
 
     if (userData && 'role' in userData) {
-      const role = (userData as { role: string }).role;
+      const role = userData.role;
       const dashboardMap: Record<string, string> = {
         mechanic: '/mechanic',
         ops_manager: '/ops',

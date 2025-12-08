@@ -36,8 +36,8 @@ export default function LoginPage() {
           .eq('id', authData.user.id)
           .single();
 
-        if (userData) {
-          const role = (userData as { role: UserRole }).role;
+        if (userData && 'role' in userData) {
+          const role = userData.role as UserRole;
           const dashboardMap: Record<UserRole, string> = {
             mechanic: '/mechanic',
             ops_manager: '/ops',

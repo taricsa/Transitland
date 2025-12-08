@@ -20,26 +20,16 @@ export default function MechanicDashboard() {
 
   useEffect(() => {
     async function getMechanicId() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: userData } = await supabase
-          .from('users')
+        const { data: mechanicData } = await supabase
+          .from('mechanics')
           .select('id')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
-        if (userData) {
-          const typedUserData = userData as { id: string };
-          const { data: mechanicData } = await supabase
-            .from('mechanics')
-            .select('id')
-            .eq('user_id', typedUserData.id)
-            .single();
-          if (mechanicData) {
-            const typedMechanicData = mechanicData as { id: string };
-            setMechanicId(typedMechanicData.id);
-          }
+
+        if (mechanicData) {
+          setMechanicId(mechanicData.id);
         }
       }
     }

@@ -2,13 +2,14 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { WorkOrder, WorkOrderStatus } from '@/types';
 import { useWorkOrders } from '@/lib/hooks/useWorkOrders';
 import { format } from 'date-fns';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export default function WorkOrderDetailPage() {
   const params = useParams();
@@ -19,35 +20,7 @@ export default function WorkOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const { updateWorkOrder } = useWorkOrders();
 
-  useEffect(() => {
-    loadWorkOrder();
-    
-    // Subscribe to real-time updates
-    const channel = (supabase as any)
-      .channel(`work_order_${workOrderId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'work_orders',
-          filter: `id=eq.${workOrderId}`,
-        },
-        (payload: any) => {
-          if (payload.eventType === 'UPDATE') {
-            setWorkOrder(payload.new as WorkOrder);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workOrderId]);
-
-  const loadWorkOrder = async () => {
+  const loadWorkOrder = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('work_orders')
@@ -62,7 +35,34 @@ export default function WorkOrderDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workOrderId, supabase]);
+
+  useEffect(() => {
+    loadWorkOrder();
+    
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel(`work_order_${workOrderId}`)
+      .on<WorkOrder>(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'work_orders',
+          filter: `id=eq.${workOrderId}`,
+        },
+        (payload: RealtimePostgresChangesPayload<WorkOrder>) => {
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            setWorkOrder(payload.new);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [workOrderId, supabase, loadWorkOrder]);
 
   const handleStatusChange = async (newStatus: WorkOrderStatus) => {
     if (!workOrder) return;

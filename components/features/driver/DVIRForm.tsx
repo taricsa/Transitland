@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -54,33 +54,24 @@ export function DVIRForm({ vehicleId, onSuccess }: DVIRFormProps) {
     },
   });
 
-  useState(() => {
+  useEffect(() => {
     async function getDriverId() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        const { data: userData } = await supabase
-          .from('users')
+        const { data: driverData } = await supabase
+          .from('drivers')
           .select('id')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
-        if (userData) {
-          const typedUserData = userData as { id: string };
-          const { data: driverData } = await supabase
-            .from('drivers')
-            .select('id')
-            .eq('user_id', typedUserData.id)
-            .single();
-          if (driverData) {
-            const typedDriverData = driverData as { id: string };
-            setDriverId(typedDriverData.id);
-          }
+        if (driverData) {
+          setDriverId(driverData.id);
         }
       }
     }
     getDriverId();
-  });
+  }, [supabase]);
 
   const watchedValues = watch();
   const hasFailures = Object.values(watchedValues).some(

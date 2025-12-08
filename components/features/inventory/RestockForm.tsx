@@ -46,7 +46,7 @@ export function RestockForm({ item, garageId, onSuccess, onCancel }: RestockForm
         .eq('garage_id', garageId)
         .single();
 
-      const currentQuantity = currentStock ? ((currentStock as unknown) as { quantity_on_hand?: number }).quantity_on_hand || 0 : 0;
+      const currentQuantity = (currentStock as { quantity_on_hand: number } | null)?.quantity_on_hand ?? 0;
       const newQuantity = currentQuantity + data.quantity;
 
       // Update stock
@@ -57,7 +57,7 @@ export function RestockForm({ item, garageId, onSuccess, onCancel }: RestockForm
           garage_id: garageId,
           quantity_on_hand: newQuantity,
           updated_at: new Date().toISOString(),
-        } as any);
+        });
 
       if (onSuccess) {
         onSuccess();

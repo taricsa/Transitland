@@ -101,7 +101,7 @@ Fill in your Supabase and PowerSync credentials. The `.env.local` file has been 
    npm install -g supabase
    
    # Link to your project
-   supabase link --project-ref roraxigbthyrzzwgddiy
+   supabase link --project-ref <your-project-ref>
    
    # Run migrations
    supabase db push

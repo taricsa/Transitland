@@ -23,34 +23,25 @@ export default function DriverDashboard() {
 
   useEffect(() => {
     async function loadDriverData() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('id')
-          .eq('id', user.id)
+        // Optimized: removed unnecessary user lookup, fetch driver directly
+        const { data: driverData } = await supabase
+          .from('drivers')
+          .select('id, current_vehicle_id')
+          .eq('user_id', user.id)
           .single();
-        if (userData) {
-          const typedUserData = userData as { id: string };
-          const { data: driverData } = await supabase
-            .from('drivers')
-            .select('id, current_vehicle_id')
-            .eq('user_id', typedUserData.id)
-            .single();
-          if (driverData) {
-            const typedDriverData = driverData as { id: string; current_vehicle_id?: string | null };
-            setDriverId(typedDriverData.id);
-            if (typedDriverData.current_vehicle_id) {
-              const { data: vehicleData } = await supabase
-                .from('vehicles')
-                .select('*')
-                .eq('id', typedDriverData.current_vehicle_id)
-                .single();
-              if (vehicleData) {
-                setVehicle(vehicleData as Vehicle);
-              }
+
+        if (driverData) {
+          setDriverId(driverData.id);
+          if (driverData.current_vehicle_id) {
+            const { data: vehicleData } = await supabase
+              .from('vehicles')
+              .select('*')
+              .eq('id', driverData.current_vehicle_id)
+              .single();
+            if (vehicleData) {
+              setVehicle(vehicleData as Vehicle);
             }
           }
         }
