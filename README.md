@@ -81,20 +81,29 @@ npm install
 cp .env.example .env.local
 ```
 
-Fill in your Supabase and PowerSync credentials:
-```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXT_PUBLIC_POWERSYNC_URL=your_powersync_url
-POWERSYNC_API_KEY=your_powersync_api_key
-```
+Fill in your Supabase and PowerSync credentials. The `.env.local` file has been created with your Supabase credentials.
 
-4. Run database migrations:
-   - Execute SQL files in `db/migrations/` in order:
-     - `001_initial_schema.sql`
-     - `002_analytics_tables.sql`
-     - `003_functions_triggers.sql`
+4. Run database migrations in Supabase:
+   
+   **Option A: Using Supabase Dashboard (Recommended)**
+   1. Go to your Supabase project dashboard: https://supabase.com/dashboard
+   2. Navigate to **SQL Editor**
+   3. Execute the migration files in order:
+      - Copy and paste the contents of `db/migrations/001_initial_schema.sql` and run it
+      - Copy and paste the contents of `db/migrations/002_analytics_tables.sql` and run it
+      - Copy and paste the contents of `db/migrations/003_functions_triggers.sql` and run it
+   
+   **Option B: Using Supabase CLI**
+   ```bash
+   # Install Supabase CLI if not already installed
+   npm install -g supabase
+   
+   # Link to your project
+   supabase link --project-ref roraxigbthyrzzwgddiy
+   
+   # Run migrations
+   supabase db push
+   ```
 
 5. Start the development server:
 ```bash
