@@ -10,6 +10,8 @@ import { FleetStatusMap } from '@/components/features/dashboard/FleetStatusMap';
 import { MechanicRoster } from '@/components/features/dashboard/MechanicRoster';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { SyncStatus } from '@/components/ui/SyncStatus';
+import { ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { handleLogout } from '@/lib/utils/logout';
 
 export default function OpsDashboard() {
   const supabase = createClient();
@@ -59,7 +61,16 @@ export default function OpsDashboard() {
               Real-time fleet operations dashboard
             </p>
           </div>
-          <SyncStatus />
+          <div className="flex items-center gap-4">
+            <SyncStatus />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+            >
+              <ArrowRightOnRectangleIcon className="h-5 w-5" />
+              Sign Out
+            </button>
+          </div>
         </div>
 
         {loading ? (

@@ -8,9 +8,10 @@ import { DVIRForm } from '@/components/features/driver/DVIRForm';
 import { IssueReportWizard } from '@/components/features/driver/IssueReportWizard';
 import { Vehicle } from '@/types';
 import { VehicleCard } from '@/components/features/vehicles/VehicleCard';
-import { ClipboardDocumentCheckIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { ClipboardDocumentCheckIcon, ExclamationTriangleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 import { Dialog } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { handleLogout } from '@/lib/utils/logout';
 
 export default function DriverDashboard() {
   const supabase = createClient();
@@ -71,11 +72,20 @@ export default function DriverDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Driver Portal</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Complete inspections and report issues
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Driver Portal</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              Complete inspections and report issues
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 rounded-md bg-gray-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            Sign Out
+          </button>
         </div>
 
         {vehicle ? (
