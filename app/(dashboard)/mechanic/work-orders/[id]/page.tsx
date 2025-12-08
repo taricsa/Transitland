@@ -53,7 +53,7 @@ export default function WorkOrderDetailPage() {
         },
         (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
           if (payload.eventType === 'UPDATE' && payload.new) {
-            setWorkOrder(payload.new as WorkOrder);
+            setWorkOrder(payload.new as unknown as WorkOrder);
           }
         }
       )
