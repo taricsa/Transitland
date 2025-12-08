@@ -8,12 +8,12 @@ Transitland Fleet OS is designed to shift fleet operations from reactive firefig
 
 ## Tech Stack
 
-- **Framework**: Next.js 14+ (App Router)
-- **Language**: TypeScript
+- **Framework**: Next.js 16+ (App Router with Turbopack)
+- **Language**: TypeScript 5.9+
 - **Database**: Supabase (PostgreSQL)
 - **Offline Sync**: PowerSync
 - **PWA**: next-pwa
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS 4.x
 - **UI Components**: HeadlessUI
 - **Forms**: React Hook Form + Zod
 - **State Management**: Zustand + React Query
@@ -53,6 +53,8 @@ Transitland Fleet OS is designed to shift fleet operations from reactive firefig
 - **Winterization Protocol**: Automatic checklist injection (Oct 1 - Nov 1)
 - **Vehicle State Machine**: Enforced state transitions
 - **Inventory Management**: Real-time stock tracking with auto-decrement
+- **User Authentication**: Secure login/logout with role-based access control
+- **Demo Data**: Comprehensive seed scripts for testing and demos
 
 ## Getting Started
 
@@ -105,12 +107,40 @@ Fill in your Supabase and PowerSync credentials. The `.env.local` file has been 
    supabase db push
    ```
 
-5. Start the development server:
+5. Set up test accounts (optional):
+   
+   See `db/README_SEED_DATA.md` for detailed instructions. Quick setup:
+   1. Create auth users in Supabase Dashboard (Authentication > Users > Add User):
+      - `mechanic@transitland.test` / `TestMechanic123!`
+      - `ops@transitland.test` / `TestOps123!`
+      - `clerk@transitland.test` / `TestClerk123!`
+      - `driver@transitland.test` / `TestDriver123!`
+   2. Run `db/migrations/004_seed_test_data.sql` to create user profiles
+   
+   Or use the SQL-based approach:
+   1. Run `db/migrations/005_create_auth_users.sql` to create auth users
+   2. Run `db/migrations/006_seed_users_after_auth.sql` to create user profiles
+
+6. Set up demo data (optional, for full demo scenario):
+   
+   See `db/README_DEMO_DATA.md` for detailed instructions. This creates:
+   - 2 garages (North: 175 buses, South: 125 buses)
+   - 300 buses with realistic data
+   - Inventory items and stock
+   - Work orders showing maintenance backlog
+   
+   ```sql
+   -- Run in Supabase SQL Editor:
+   -- 1. db/migrations/007_seed_demo_data.sql
+   -- 2. db/migrations/008_assign_users_to_demo_garages.sql (to assign test users to North Garage)
+   ```
+
+7. Start the development server:
 ```bash
 npm run dev
 ```
 
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+8. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Project Structure
 
@@ -133,6 +163,8 @@ npm run dev
   /utils          - Utility functions
 /db
   /migrations     - Database migration files
+  README_SEED_DATA.md - Test account setup guide
+  README_DEMO_DATA.md - Demo data setup guide
 /types            - TypeScript type definitions
 ```
 
@@ -186,6 +218,19 @@ Valid transitions:
 - `main` → Production
 - `stage` → Testing/Staging
 - `develop` → Development
+
+### Test Accounts
+
+The following test accounts are available for development and testing:
+
+| Role | Email | Password | Dashboard |
+|------|-------|----------|-----------|
+| Mechanic | `mechanic@transitland.test` | `TestMechanic123!` | `/mechanic` |
+| Ops Manager | `ops@transitland.test` | `TestOps123!` | `/ops` |
+| Parts Clerk | `clerk@transitland.test` | `TestClerk123!` | `/clerk` |
+| Driver | `driver@transitland.test` | `TestDriver123!` | `/driver` |
+
+All accounts have logout functionality accessible from their respective dashboards.
 
 ### Running Tests
 ```bash
