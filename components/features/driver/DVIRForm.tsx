@@ -66,13 +66,15 @@ export function DVIRForm({ vehicleId, onSuccess }: DVIRFormProps) {
           .eq('id', user.id)
           .single();
         if (userData) {
+          const typedUserData = userData as { id: string };
           const { data: driverData } = await supabase
             .from('drivers')
             .select('id')
-            .eq('user_id', userData.id)
+            .eq('user_id', typedUserData.id)
             .single();
           if (driverData) {
-            setDriverId(driverData.id);
+            const typedDriverData = driverData as { id: string };
+            setDriverId(typedDriverData.id);
           }
         }
       }

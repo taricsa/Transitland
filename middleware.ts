@@ -52,13 +52,13 @@ export async function middleware(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (!userData) {
+    if (!userData || !('role' in userData)) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
     // Role-based route protection
     const path = request.nextUrl.pathname;
-    const userRole = userData.role;
+    const userRole = (userData as { role: string; garage_id?: string }).role;
 
     if (path.startsWith('/mechanic') && userRole !== 'mechanic') {
       return NextResponse.redirect(new URL('/unauthorized', request.url));
@@ -78,14 +78,14 @@ export async function middleware(request: NextRequest) {
   if ((request.nextUrl.pathname === '/login' || 
        request.nextUrl.pathname === '/register') && user) {
     // Redirect to appropriate dashboard based on role
-    const { data: userData } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+      const { data: userData } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
 
-    if (userData) {
-      const role = userData.role;
+      if (userData && 'role' in userData) {
+        const role = (userData as { role: string }).role;
       const dashboardMap: Record<string, string> = {
         mechanic: '/mechanic',
         ops_manager: '/ops',

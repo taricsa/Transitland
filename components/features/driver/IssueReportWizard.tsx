@@ -66,13 +66,15 @@ export function IssueReportWizard({ vehicleId, onSuccess }: IssueReportWizardPro
           .eq('id', user.id)
           .single();
         if (userData) {
+          const typedUserData = userData as { id: string };
           const { data: driverData } = await supabase
             .from('drivers')
             .select('id')
-            .eq('user_id', userData.id)
+            .eq('user_id', typedUserData.id)
             .single();
           if (driverData) {
-            setDriverId(driverData.id);
+            const typedDriverData = driverData as { id: string };
+            setDriverId(typedDriverData.id);
           }
         }
       }
@@ -113,7 +115,7 @@ export function IssueReportWizard({ vehicleId, onSuccess }: IssueReportWizardPro
   if (step === 1) {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">What's the issue?</h3>
+        <h3 className="text-lg font-semibold text-gray-900">What&apos;s the issue?</h3>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {ISSUE_TYPES.map((type) => (
             <button

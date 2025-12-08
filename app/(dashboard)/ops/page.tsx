@@ -26,8 +26,11 @@ export default function OpsDashboard() {
           .select('garage_id')
           .eq('id', user.id)
           .single();
-        if (userData?.garage_id) {
-          setGarageId(userData.garage_id);
+        if (userData) {
+          const typedUserData = userData as { garage_id?: string | null };
+          if (typedUserData.garage_id) {
+            setGarageId(typedUserData.garage_id);
+          }
         }
       }
 
@@ -40,6 +43,7 @@ export default function OpsDashboard() {
       }
     }
     getGarageId();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

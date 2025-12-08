@@ -27,18 +27,21 @@ export default function MechanicDashboard() {
           .eq('id', user.id)
           .single();
         if (userData) {
+          const typedUserData = userData as { id: string };
           const { data: mechanicData } = await supabase
             .from('mechanics')
             .select('id')
-            .eq('user_id', userData.id)
+            .eq('user_id', typedUserData.id)
             .single();
           if (mechanicData) {
-            setMechanicId(mechanicData.id);
+            const typedMechanicData = mechanicData as { id: string };
+            setMechanicId(typedMechanicData.id);
           }
         }
       }
     }
     getMechanicId();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openWorkOrders = workOrders.filter(

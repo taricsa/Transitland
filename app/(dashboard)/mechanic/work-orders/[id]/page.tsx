@@ -42,6 +42,7 @@ export default function WorkOrderDetailPage() {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workOrderId]);
 
   const loadWorkOrder = async () => {

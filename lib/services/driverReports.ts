@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client';
-import { WorkOrderPriority, WorkOrderType } from '@/types';
+import { WorkOrderPriority, WorkOrderType, WorkOrderStatus } from '@/types';
 import { WorkOrderPriorityService } from './workOrderPriority';
 import { isCriticalIssue } from '@/lib/utils/priorityMatrix';
 
@@ -37,8 +37,8 @@ export class DriverReportService {
         issue_type: report.issue_type,
         type: WorkOrderType.REPAIR,
         priority,
-        status: 'Open',
-        created_by: user?.id,
+        status: WorkOrderStatus.OPEN,
+        created_by: user?.id || undefined,
       })
       .select()
       .single();

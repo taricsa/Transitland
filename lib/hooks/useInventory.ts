@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { InventoryStock, InventoryItem } from '@/types';
 
@@ -9,6 +9,32 @@ export function useInventory(garageId?: string) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const supabase = createClient();
+
+  const loadInventory = useCallback(async () => {
+    try {
+      setLoading(true);
+      let query = supabase
+        .from('inventory_stock')
+        .select(`
+          *,
+          inventory_items (*)
+        `)
+        .order('quantity_on_hand', { ascending: true });
+
+      if (garageId) {
+        query = query.eq('garage_id', garageId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setInventory((data || []) as (InventoryStock & { item: InventoryItem })[]);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [garageId, supabase]);
 
   useEffect(() => {
     loadInventory();
@@ -33,33 +59,8 @@ export function useInventory(garageId?: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [garageId]);
+  }, [garageId, loadInventory, supabase]);
 
-  const loadInventory = async () => {
-    try {
-      setLoading(true);
-      let query = supabase
-        .from('inventory_stock')
-        .select(`
-          *,
-          inventory_items (*)
-        `)
-        .order('quantity_on_hand', { ascending: true });
-
-      if (garageId) {
-        query = query.eq('garage_id', garageId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setInventory((data || []) as (InventoryStock & { item: InventoryItem })[]);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const updateStock = async (
     inventoryItemId: string,
@@ -74,7 +75,7 @@ export function useInventory(garageId?: string) {
           garage_id: garageId,
           quantity_on_hand: quantity,
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .select()
         .single();
 
@@ -101,7 +102,7 @@ export function useInventory(garageId?: string) {
         .eq('garage_id', garageId)
         .single();
 
-      const currentQuantity = currentStock?.quantity_on_hand || 0;
+      const currentQuantity = currentStock ? ((currentStock as unknown) as { quantity_on_hand?: number }).quantity_on_hand || 0 : 0;
       const newQuantity = currentQuantity + quantity;
 
       return await updateStock(inventoryItemId, garageId, newQuantity);

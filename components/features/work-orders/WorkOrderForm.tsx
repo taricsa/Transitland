@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { WorkOrderType, WorkOrderPriority } from '@/types';
+import { WorkOrderType, WorkOrderPriority, WorkOrderStatus } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkOrders } from '@/lib/hooks/useWorkOrders';
 import { useRouter } from 'next/navigation';
@@ -14,8 +14,8 @@ const workOrderSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   issue_type: z.string().optional(),
-  type: z.enum(['Preventive', 'Repair']),
-  priority: z.enum(['P0', 'P1', 'P2', 'P3']),
+  type: z.nativeEnum(WorkOrderType),
+  priority: z.nativeEnum(WorkOrderPriority),
   estimated_hours: z.number().optional(),
 });
 
@@ -41,8 +41,8 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
   } = useForm<WorkOrderFormData>({
     resolver: zodResolver(workOrderSchema),
     defaultValues: {
-      type: 'Repair',
-      priority: 'P3',
+      type: WorkOrderType.REPAIR,
+      priority: WorkOrderPriority.P3,
       vehicle_id: vehicleId || '',
     },
   });
@@ -59,13 +59,16 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
           .select('garage_id')
           .eq('id', user.id)
           .single();
-        if (userData?.garage_id) {
-          const { data: vehiclesData } = await supabase
-            .from('vehicles')
-            .select('id, vin, make, model, year')
-            .eq('garage_id', userData.garage_id);
-          if (vehiclesData) {
-            setVehicles(vehiclesData);
+        if (userData) {
+          const typedUserData = userData as { garage_id?: string | null };
+          if (typedUserData.garage_id) {
+            const { data: vehiclesData } = await supabase
+              .from('vehicles')
+              .select('id, vin, make, model, year')
+              .eq('garage_id', typedUserData.garage_id);
+            if (vehiclesData) {
+              setVehicles(vehiclesData);
+            }
           }
         }
       }
@@ -82,8 +85,8 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
 
       const workOrder = await createWorkOrder({
         ...data,
-        status: 'Open',
-        created_by: user?.id,
+        status: WorkOrderStatus.OPEN,
+        created_by: user?.id || undefined,
       });
 
       if (onSuccess) {
@@ -142,8 +145,8 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
           {...register('type')}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
         >
-          <option value="Repair">Repair</option>
-          <option value="Preventive">Preventive</option>
+          <option value={WorkOrderType.REPAIR}>Repair</option>
+          <option value={WorkOrderType.PREVENTIVE}>Preventive</option>
         </select>
       </div>
 
@@ -155,10 +158,10 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
           {...register('priority')}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
         >
-          <option value="P0">P0 - Critical</option>
-          <option value="P1">P1 - High</option>
-          <option value="P2">P2 - Medium</option>
-          <option value="P3">P3 - Deferrable</option>
+          <option value={WorkOrderPriority.P0}>P0 - Critical</option>
+          <option value={WorkOrderPriority.P1}>P1 - High</option>
+          <option value={WorkOrderPriority.P2}>P2 - Medium</option>
+          <option value={WorkOrderPriority.P3}>P3 - Deferrable</option>
         </select>
       </div>
 

@@ -30,18 +30,20 @@ export default function DriverDashboard() {
           .eq('id', user.id)
           .single();
         if (userData) {
+          const typedUserData = userData as { id: string };
           const { data: driverData } = await supabase
             .from('drivers')
             .select('id, current_vehicle_id')
-            .eq('user_id', userData.id)
+            .eq('user_id', typedUserData.id)
             .single();
           if (driverData) {
-            setDriverId(driverData.id);
-            if (driverData.current_vehicle_id) {
+            const typedDriverData = driverData as { id: string; current_vehicle_id?: string | null };
+            setDriverId(typedDriverData.id);
+            if (typedDriverData.current_vehicle_id) {
               const { data: vehicleData } = await supabase
                 .from('vehicles')
                 .select('*')
-                .eq('id', driverData.current_vehicle_id)
+                .eq('id', typedDriverData.current_vehicle_id)
                 .single();
               if (vehicleData) {
                 setVehicle(vehicleData as Vehicle);
@@ -53,6 +55,7 @@ export default function DriverDashboard() {
       setLoading(false);
     }
     loadDriverData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {

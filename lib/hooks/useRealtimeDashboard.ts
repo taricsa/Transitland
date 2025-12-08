@@ -39,6 +39,7 @@ export function useRealtimeDashboard(garageId?: string) {
   useEffect(() => {
     loadData();
     setupRealtimeSubscriptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [garageId]);
 
   const loadData = async () => {
@@ -62,9 +63,10 @@ export function useRealtimeDashboard(garageId?: string) {
           .select('id')
           .eq('garage_id', garageId);
         if (garageVehicles) {
+          const vehicleIds = garageVehicles.map((v) => ((v as unknown) as { id: string }).id);
           workOrdersQuery = workOrdersQuery.in(
             'vehicle_id',
-            garageVehicles.map((v) => v.id)
+            vehicleIds
           );
         }
       }
@@ -79,13 +81,11 @@ export function useRealtimeDashboard(garageId?: string) {
           .eq('garage_id', garageId)
           .eq('role', 'mechanic');
         if (usersData) {
+          const userIds = usersData.map((u) => ((u as unknown) as { id: string }).id);
           const { data: mechanicsData } = await supabase
             .from('mechanics')
             .select('*')
-            .in(
-              'user_id',
-              usersData.map((u) => u.id)
-            );
+            .in('user_id', userIds);
           setMechanics((mechanicsData || []) as Mechanic[]);
         }
       }
@@ -175,6 +175,7 @@ export function useRealtimeDashboard(garageId?: string) {
 
   useEffect(() => {
     calculateMetrics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehicles, workOrders, mechanics]);
 
   return {

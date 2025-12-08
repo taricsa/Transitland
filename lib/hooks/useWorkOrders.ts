@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { WorkOrder, WorkOrderStatus, WorkOrderType, WorkOrderPriority } from '@/types';
 import { offlineQueue } from '@/lib/utils/offlineQueue';
@@ -12,6 +12,26 @@ export function useWorkOrders(mechanicId?: string) {
   const [error, setError] = useState<Error | null>(null);
   const supabase = createClient();
   const { isOnline } = useNetworkStatus();
+
+  const loadWorkOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      let query = supabase.from('work_orders').select('*').order('created_at', { ascending: false });
+
+      if (mechanicId) {
+        query = query.eq('assigned_mechanic_id', mechanicId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      setWorkOrders((data || []) as WorkOrder[]);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [mechanicId, supabase]);
 
   useEffect(() => {
     loadWorkOrders();
@@ -44,27 +64,7 @@ export function useWorkOrders(mechanicId?: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [mechanicId]);
-
-  const loadWorkOrders = async () => {
-    try {
-      setLoading(true);
-      let query = supabase.from('work_orders').select('*').order('created_at', { ascending: false });
-
-      if (mechanicId) {
-        query = query.eq('assigned_mechanic_id', mechanicId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setWorkOrders((data || []) as WorkOrder[]);
-    } catch (err) {
-      setError(err as Error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [mechanicId, loadWorkOrders, supabase]);
 
   const createWorkOrder = async (workOrder: Omit<WorkOrder, 'id' | 'created_at' | 'updated_at'>) => {
     try {
@@ -88,7 +88,7 @@ export function useWorkOrders(mechanicId?: string) {
 
       const { data, error } = await supabase
         .from('work_orders')
-        .insert(workOrder)
+        .insert(workOrder as any)
         .select()
         .single();
 
@@ -116,7 +116,8 @@ export function useWorkOrders(mechanicId?: string) {
         return;
       }
 
-      const { data, error } = await supabase
+      // @ts-expect-error - Supabase type inference issue with partial updates
+      const { data, error } = await (supabase as any)
         .from('work_orders')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)

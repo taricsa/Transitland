@@ -1,7 +1,7 @@
 'use client';
 
 import { DashboardMetrics } from '@/lib/hooks/useRealtimeDashboard';
-import { TruckIcon, WrenchScrewdriverIcon, SnowflakeIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import { TruckIcon, WrenchScrewdriverIcon, CloudIcon, ChartBarIcon } from '@heroicons/react/24/outline';
 
 interface KPICardsProps {
   metrics: DashboardMetrics;
@@ -29,7 +29,7 @@ export function KPICards({ metrics }: KPICardsProps) {
       name: 'Winter Readiness',
       value: `${metrics.winterReadiness.toFixed(1)}%`,
       description: 'Vehicles winterized',
-      icon: SnowflakeIcon,
+      icon: CloudIcon,
       color: 'bg-indigo-500',
       trend: metrics.winterReadiness >= 100 ? 'good' : 'needs-attention',
     },

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { InventoryItem } from '@/types';
+import { createClient } from '@/lib/supabase/client';
 
 const restockSchema = z.object({
   quantity: z.number().min(1, 'Quantity must be at least 1'),
@@ -22,6 +23,7 @@ interface RestockFormProps {
 
 export function RestockForm({ item, garageId, onSuccess, onCancel }: RestockFormProps) {
   const [loading, setLoading] = useState(false);
+  const supabase = createClient();
   const {
     register,
     handleSubmit,
@@ -36,8 +38,27 @@ export function RestockForm({ item, garageId, onSuccess, onCancel }: RestockForm
   const onSubmit = async (data: RestockFormData) => {
     try {
       setLoading(true);
-      // This would call the restock function from useInventory hook
-      // For now, we'll just call the onSuccess callback
+      // Get current stock
+      const { data: currentStock } = await supabase
+        .from('inventory_stock')
+        .select('quantity_on_hand')
+        .eq('inventory_item_id', item.id)
+        .eq('garage_id', garageId)
+        .single();
+
+      const currentQuantity = currentStock ? ((currentStock as unknown) as { quantity_on_hand?: number }).quantity_on_hand || 0 : 0;
+      const newQuantity = currentQuantity + data.quantity;
+
+      // Update stock
+      await supabase
+        .from('inventory_stock')
+        .upsert({
+          inventory_item_id: item.id,
+          garage_id: garageId,
+          quantity_on_hand: newQuantity,
+          updated_at: new Date().toISOString(),
+        } as any);
+
       if (onSuccess) {
         onSuccess();
       }

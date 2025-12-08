@@ -35,7 +35,7 @@ export default function LoginPage() {
           .single();
 
         if (userData) {
-          const role = userData.role;
+          const role = (userData as { role: UserRole }).role;
           const dashboardMap: Record<UserRole, string> = {
             mechanic: '/mechanic',
             ops_manager: '/ops',
