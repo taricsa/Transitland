@@ -91,16 +91,17 @@ $$;
 
 -- Policy: Allow authenticated users to read photos for work orders they have access to
 -- Path structure: work-orders/{work_order_id}/{timestamp}.{ext}
--- foldername(name) returns array where [1] = 'work-orders', [2] = work_order_id
+-- Extract work_order_id from path: work-orders/{work_order_id}/...
+-- Using regex to extract UUID from path after 'work-orders/'
 CREATE POLICY "Allow authenticated users to read work order photos"
 ON storage.objects
 FOR SELECT
 TO authenticated
 USING (
   bucket_id = 'work-order-photos' AND
-  (storage.foldername(name))[1] = 'work-orders' AND
+  name LIKE 'work-orders/%' AND
   can_access_work_order(
-    (storage.foldername(name))[2]::UUID,
+    (regexp_match(name, 'work-orders/([a-f0-9-]{36})/'))[1]::UUID,
     auth.uid()
   )
 );
