@@ -128,7 +128,15 @@ export function useRealtimeDashboard(garageId?: string) {
     const inService = vehicles.filter((v) => v.status === 'IN_SERVICE').length;
     const inMaintenance = vehicles.filter((v) => v.status === 'IN_MAINTENANCE').length;
     const outOfService = vehicles.filter((v) => v.status === 'OUT_OF_SERVICE').length;
-    const availabilityRate = total > 0 ? (available / total) * 100 : 0;
+    const maintenanceDue = vehicles.filter((v) => v.status === 'MAINTENANCE_DUE').length;
+    
+    // Fleet Availability = (Available + In Service) / Total
+    // This represents vehicles that are operational and can be dispatched
+    const operationalVehicles = available + inService;
+    const availabilityRate = total > 0 ? (operationalVehicles / total) * 100 : 0;
+    
+    // Vehicles down = In Maintenance + Out of Service (vehicles that cannot be dispatched)
+    const vehiclesDown = inMaintenance + outOfService;
 
     const openWOs = workOrders.filter(
       (wo) => wo.status !== 'Closed' && wo.status !== 'Cancelled'
@@ -167,7 +175,7 @@ export function useRealtimeDashboard(garageId?: string) {
       availableVehicles: available,
       inServiceVehicles: inService,
       inMaintenanceVehicles: inMaintenance,
-      outOfServiceVehicles: outOfService,
+      outOfServiceVehicles: vehiclesDown, // Total vehicles down (in maintenance + out of service)
       availabilityRate,
       mechanicUtilization,
       winterReadiness,
