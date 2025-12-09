@@ -116,8 +116,10 @@ export default function WorkOrderDetailPage() {
           supabase.from('inventory_stock').select('*').in('inventory_item_id', itemIds).eq('garage_id', garageId),
         ]);
 
-        const itemsById = new Map((itemsData || []).map((item: any) => [item.id, item as InventoryItem]));
-        const stockByItemId = new Map((stockData || []).map((stock: any) => [stock.inventory_item_id, stock as InventoryStock]));
+        const typedItems = (itemsData || []) as InventoryItem[];
+        const typedStock = (stockData || []) as InventoryStock[];
+        const itemsById = new Map(typedItems.map((item) => [item.id, item]));
+        const stockByItemId = new Map(typedStock.map((stock) => [stock.inventory_item_id, stock]));
 
         const partsWithDetails = typedParts.map((part) => ({
           ...part,
