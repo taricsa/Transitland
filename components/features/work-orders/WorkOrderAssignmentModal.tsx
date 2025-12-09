@@ -28,6 +28,7 @@ export function WorkOrderAssignmentModal({
   const supabase = createClient();
   const [mechanicNames, setMechanicNames] = useState<Record<string, string>>({});
   const [mechanics, setMechanics] = useState<Mechanic[]>(propsMechanics || []);
+  const [loadingMechanics, setLoadingMechanics] = useState(false);
 
   // Load mechanics if not provided or if empty
   useEffect(() => {
@@ -40,6 +41,7 @@ export function WorkOrderAssignmentModal({
 
       // Otherwise, load mechanics directly
       try {
+        setLoadingMechanics(true);
         let usersQuery = supabase
           .from('users')
           .select('id')
@@ -60,10 +62,17 @@ export function WorkOrderAssignmentModal({
           
           if (mechanicsData) {
             setMechanics(mechanicsData as Mechanic[]);
+          } else {
+            setMechanics([]);
           }
+        } else {
+          setMechanics([]);
         }
       } catch (err) {
         console.error('Error loading mechanics:', err);
+        setMechanics([]);
+      } finally {
+        setLoadingMechanics(false);
       }
     }
     loadMechanics();
@@ -167,19 +176,29 @@ export function WorkOrderAssignmentModal({
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Select Mechanic
             </label>
-            <select
-              value={selectedMechanicId}
-              onChange={(e) => setSelectedMechanicId(e.target.value)}
-              className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Choose a mechanic...</option>
-              {mechanics.map((mechanic) => (
-                <option key={mechanic.id} value={mechanic.id}>
-                  {mechanicNames[mechanic.id] || `Mechanic ${mechanic.id.slice(0, 8)}`}
-                  {mechanic.specialty && ` - ${mechanic.specialty}`}
-                </option>
-              ))}
-            </select>
+            {loadingMechanics ? (
+              <div className="block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                Loading mechanics...
+              </div>
+            ) : mechanics.length === 0 ? (
+              <div className="block w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                No mechanics available
+              </div>
+            ) : (
+              <select
+                value={selectedMechanicId}
+                onChange={(e) => setSelectedMechanicId(e.target.value)}
+                className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Choose a mechanic...</option>
+                {mechanics.map((mechanic) => (
+                  <option key={mechanic.id} value={mechanic.id}>
+                    {mechanicNames[mechanic.id] || `Mechanic ${mechanic.id.slice(0, 8)}`}
+                    {mechanic.specialty && ` - ${mechanic.specialty}`}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Error Message */}
