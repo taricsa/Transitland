@@ -342,7 +342,7 @@ export default function WorkOrderDetailPage() {
         .getPublicUrl(filePath);
 
       // Create work_order_event for photo
-      const { error: eventError } = await supabase
+      const { error: eventError } = await (supabase as any)
         .from('work_order_events')
         .insert({
           work_order_id: workOrder.id,
