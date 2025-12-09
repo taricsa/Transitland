@@ -90,6 +90,8 @@ END;
 $$;
 
 -- Policy: Allow authenticated users to read photos for work orders they have access to
+-- Path structure: work-orders/{work_order_id}/{timestamp}.{ext}
+-- foldername(name) returns array where [1] = 'work-orders', [2] = work_order_id
 CREATE POLICY "Allow authenticated users to read work order photos"
 ON storage.objects
 FOR SELECT
