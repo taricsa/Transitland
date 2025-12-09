@@ -6,26 +6,21 @@ export function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
   if (!url || !key) {
-    // Return a mock client for build time
-    // This will be replaced with actual client at runtime
-    return {
-      auth: {
-        getUser: async () => ({ data: { user: null }, error: null }),
-        getSession: async () => ({ data: { session: null }, error: null }),
-        signInWithPassword: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
-      },
-      from: () => ({
-        select: () => ({ eq: () => ({ single: async () => ({ data: null, error: null }) }) }),
-        insert: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }),
-        update: () => ({ eq: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }) }),
-        delete: () => ({ eq: async () => ({ error: null }) }),
-        upsert: () => ({ select: () => ({ single: async () => ({ data: null, error: null }) }) }),
-      }),
-      channel: () => ({
-        on: () => ({ subscribe: () => ({}) }),
-      }),
-      removeChannel: () => {},
-    } as any;
+    // In production/runtime, throw an error if env vars are missing
+    // This helps identify configuration issues immediately
+    if (typeof window !== 'undefined') {
+      console.error('Missing Supabase environment variables:', {
+        hasUrl: !!url,
+        hasKey: !!key,
+      });
+    }
+    
+    // Still return a client to prevent build errors, but it will fail at runtime
+    // This allows the app to build but will show clear errors when used
+    return createBrowserClient<Database>(
+      url || 'https://placeholder.supabase.co',
+      key || 'placeholder-key'
+    );
   }
   
   return createBrowserClient<Database>(url, key);

@@ -13,6 +13,7 @@ export interface DashboardMetrics {
   availabilityRate: number;
   mechanicUtilization: number;
   winterReadiness: number;
+  mttr: number; // Mean Time To Repair in hours
   openWorkOrders: number;
   criticalWorkOrders: number;
 }
@@ -30,6 +31,7 @@ export function useRealtimeDashboard(garageId?: string) {
     availabilityRate: 0,
     mechanicUtilization: 0,
     winterReadiness: 0,
+    mttr: 0,
     openWorkOrders: 0,
     criticalWorkOrders: 0,
   });
@@ -87,10 +89,32 @@ export function useRealtimeDashboard(garageId?: string) {
             .select('*')
             .in('user_id', userIds);
           setMechanics((mechanicsData || []) as Mechanic[]);
+        } else {
+          setMechanics([]);
+        }
+      } else {
+        // Load all mechanics when "All" is selected
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'mechanic');
+        if (usersData) {
+          const userIds = usersData.map((u: any) => u.id);
+          if (userIds.length > 0) {
+            const { data: mechanicsData } = await (supabase as any)
+              .from('mechanics')
+              .select('*')
+              .in('user_id', userIds);
+            setMechanics((mechanicsData || []) as Mechanic[]);
+          } else {
+            setMechanics([]);
+          }
+        } else {
+          setMechanics([]);
         }
       }
 
-      calculateMetrics();
+      await calculateMetrics();
     } catch (err) {
       console.error('Error loading dashboard data:', err);
     } finally {
@@ -98,13 +122,21 @@ export function useRealtimeDashboard(garageId?: string) {
     }
   };
 
-  const calculateMetrics = () => {
+  const calculateMetrics = async () => {
     const total = vehicles.length;
     const available = vehicles.filter((v) => v.status === 'AVAILABLE').length;
     const inService = vehicles.filter((v) => v.status === 'IN_SERVICE').length;
     const inMaintenance = vehicles.filter((v) => v.status === 'IN_MAINTENANCE').length;
     const outOfService = vehicles.filter((v) => v.status === 'OUT_OF_SERVICE').length;
-    const availabilityRate = total > 0 ? (available / total) * 100 : 0;
+    const maintenanceDue = vehicles.filter((v) => v.status === 'MAINTENANCE_DUE').length;
+    
+    // Fleet Availability = (Available + In Service) / Total
+    // This represents vehicles that are operational and can be dispatched
+    const operationalVehicles = available + inService;
+    const availabilityRate = total > 0 ? (operationalVehicles / total) * 100 : 0;
+    
+    // Vehicles down = In Maintenance + Out of Service (vehicles that cannot be dispatched)
+    const vehiclesDown = inMaintenance + outOfService;
 
     const openWOs = workOrders.filter(
       (wo) => wo.status !== 'Closed' && wo.status !== 'Cancelled'
@@ -120,15 +152,34 @@ export function useRealtimeDashboard(garageId?: string) {
     const winterized = vehicles.filter((v) => v.winterized_bool).length;
     const winterReadiness = total > 0 ? (winterized / total) * 100 : 0;
 
+    // Calculate MTTR (Mean Time To Repair) - average hours from created_at to closed_at for closed work orders
+    let mttr = 0;
+    const closedWorkOrders = workOrders.filter(
+      (wo) => wo.status === 'Closed' && wo.closed_at
+    );
+    if (closedWorkOrders.length > 0) {
+      const totalHours = closedWorkOrders.reduce((sum, wo) => {
+        if (wo.closed_at && wo.created_at) {
+          const created = new Date(wo.created_at).getTime();
+          const closed = new Date(wo.closed_at).getTime();
+          const hours = (closed - created) / (1000 * 60 * 60); // Convert ms to hours
+          return sum + hours;
+        }
+        return sum;
+      }, 0);
+      mttr = totalHours / closedWorkOrders.length;
+    }
+
     setMetrics({
       totalVehicles: total,
       availableVehicles: available,
       inServiceVehicles: inService,
       inMaintenanceVehicles: inMaintenance,
-      outOfServiceVehicles: outOfService,
+      outOfServiceVehicles: vehiclesDown, // Total vehicles down (in maintenance + out of service)
       availabilityRate,
       mechanicUtilization,
       winterReadiness,
+      mttr,
       openWorkOrders: openWOs,
       criticalWorkOrders: criticalWOs,
     });
@@ -174,7 +225,7 @@ export function useRealtimeDashboard(garageId?: string) {
   };
 
   useEffect(() => {
-    calculateMetrics();
+    calculateMetrics().catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehicles, workOrders, mechanics]);
 

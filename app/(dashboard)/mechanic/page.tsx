@@ -29,7 +29,8 @@ export default function MechanicDashboard() {
           .single();
 
         if (mechanicData) {
-          setMechanicId(mechanicData.id);
+          const typedMechanicData = mechanicData as { id: string };
+          setMechanicId(typedMechanicData.id);
         }
       }
     }

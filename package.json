@@ -38,5 +38,10 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "rimraf": "^5.0.5",
+    "@jridgewell/sourcemap-codec": "^1.4.15",
+    "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.4.15"
   }
 }

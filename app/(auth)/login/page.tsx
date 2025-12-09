@@ -36,16 +36,22 @@ export default function LoginPage() {
           .eq('id', authData.user.id)
           .single();
 
-        if (userData && 'role' in userData) {
-          const role = userData.role as UserRole;
-          const dashboardMap: Record<UserRole, string> = {
-            mechanic: '/mechanic',
-            ops_manager: '/ops',
-            parts_clerk: '/clerk',
-            driver: '/driver',
-          };
-          router.push(dashboardMap[role] || '/dashboard');
-          router.refresh();
+        if (userData) {
+          const typedUserData = userData as { role?: string };
+          if (typedUserData.role) {
+            const role = typedUserData.role as UserRole;
+            const dashboardMap: Record<UserRole, string> = {
+              mechanic: '/mechanic',
+              ops_manager: '/ops',
+              parts_clerk: '/clerk',
+              driver: '/driver',
+            };
+            router.push(dashboardMap[role] || '/dashboard');
+            router.refresh();
+          } else {
+            router.push('/dashboard');
+            router.refresh();
+          }
         } else {
           router.push('/dashboard');
           router.refresh();

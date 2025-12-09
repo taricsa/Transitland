@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,6 +8,7 @@ import { WorkOrderType, WorkOrderPriority, WorkOrderStatus } from '@/types';
 import { createClient } from '@/lib/supabase/client';
 import { useWorkOrders } from '@/lib/hooks/useWorkOrders';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 const workOrderSchema = z.object({
   vehicle_id: z.string().min(1, 'Vehicle is required'),
@@ -28,10 +29,16 @@ interface WorkOrderFormProps {
 
 export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { createWorkOrder } = useWorkOrders();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Get vehicleId and type from props or URL params
+  // searchParams is guaranteed to be available when wrapped in Suspense
+  const urlVehicleId = searchParams.get('vehicleId') || vehicleId || '';
+  const urlType = searchParams.get('type') || '';
 
   const {
     register,
@@ -41,14 +48,14 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
   } = useForm<WorkOrderFormData>({
     resolver: zodResolver(workOrderSchema),
     defaultValues: {
-      type: WorkOrderType.REPAIR,
+      type: (urlType === 'Preventive' ? WorkOrderType.PREVENTIVE : WorkOrderType.REPAIR),
       priority: WorkOrderPriority.P3,
-      vehicle_id: vehicleId || '',
+      vehicle_id: urlVehicleId,
     },
   });
 
   // Load vehicles
-  useState(() => {
+  useEffect(() => {
     async function loadVehicles() {
       const {
         data: { user },
@@ -56,12 +63,22 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
       if (user) {
         const { data: userData } = await supabase
           .from('users')
-          .select('garage_id')
+          .select('garage_id, role')
           .eq('id', user.id)
           .single();
         if (userData) {
-          const typedUserData = userData as { garage_id?: string | null };
-          if (typedUserData.garage_id) {
+          const typedUserData = userData as { garage_id?: string | null; role?: string };
+          
+          // If ops manager, show all vehicles; otherwise show only garage vehicles
+          if (typedUserData.role === 'ops_manager') {
+            const { data: vehiclesData } = await supabase
+              .from('vehicles')
+              .select('id, vin, make, model, year')
+              .order('vin');
+            if (vehiclesData) {
+              setVehicles(vehiclesData);
+            }
+          } else if (typedUserData.garage_id) {
             const { data: vehiclesData } = await supabase
               .from('vehicles')
               .select('id, vin, make, model, year')
@@ -74,7 +91,17 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
       }
     }
     loadVehicles();
-  });
+  }, [supabase]);
+
+  // Set vehicle and type from URL params
+  useEffect(() => {
+    if (urlVehicleId) {
+      setValue('vehicle_id', urlVehicleId);
+    }
+    if (urlType === 'Preventive') {
+      setValue('type', WorkOrderType.PREVENTIVE);
+    }
+  }, [urlVehicleId, urlType, setValue]);
 
   const onSubmit = async (data: WorkOrderFormData) => {
     try {
@@ -92,7 +119,13 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push(`/mechanic/work-orders/${workOrder.id}`);
+        // Redirect based on user role - check if we're in ops route
+        const currentPath = window.location.pathname;
+        if (currentPath.includes('/ops/')) {
+          router.push(`/ops`);
+        } else {
+          router.push(`/mechanic/work-orders/${workOrder.id}`);
+        }
       }
     } catch (err) {
       console.error('Error creating work order:', err);

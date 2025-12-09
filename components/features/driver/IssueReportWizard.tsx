@@ -67,7 +67,8 @@ export function IssueReportWizard({ vehicleId, onSuccess }: IssueReportWizardPro
           .eq('user_id', user.id)
           .single();
         if (driverData) {
-          setDriverId(driverData.id);
+          const typedDriverData = driverData as { id: string };
+          setDriverId(typedDriverData.id);
         }
       }
     }

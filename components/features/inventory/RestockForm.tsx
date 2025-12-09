@@ -50,7 +50,7 @@ export function RestockForm({ item, garageId, onSuccess, onCancel }: RestockForm
       const newQuantity = currentQuantity + data.quantity;
 
       // Update stock
-      await supabase
+      await (supabase as any)
         .from('inventory_stock')
         .upsert({
           inventory_item_id: item.id,
