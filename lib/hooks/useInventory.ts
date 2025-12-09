@@ -102,7 +102,8 @@ export function useInventory(garageId?: string) {
         .eq('garage_id', garageId)
         .single();
 
-      const currentQuantity = currentStock ? ((currentStock as unknown) as { quantity_on_hand?: number }).quantity_on_hand || 0 : 0;
+      const typedCurrentStock = currentStock as { quantity_on_hand?: number } | null;
+      const currentQuantity = typedCurrentStock?.quantity_on_hand ?? 0;
       const newQuantity = currentQuantity + quantity;
 
       return await updateStock(inventoryItemId, garageId, newQuantity);

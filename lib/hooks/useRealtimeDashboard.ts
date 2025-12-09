@@ -9,7 +9,8 @@ export interface DashboardMetrics {
   availableVehicles: number;
   inServiceVehicles: number;
   inMaintenanceVehicles: number;
-  outOfServiceVehicles: number;
+  outOfServiceVehicles: number; // Vehicles with OUT_OF_SERVICE status
+  downVehicles: number; // Total vehicles down (in maintenance + out of service)
   availabilityRate: number;
   mechanicUtilization: number;
   winterReadiness: number;
@@ -28,6 +29,7 @@ export function useRealtimeDashboard(garageId?: string) {
     inServiceVehicles: 0,
     inMaintenanceVehicles: 0,
     outOfServiceVehicles: 0,
+    downVehicles: 0,
     availabilityRate: 0,
     mechanicUtilization: 0,
     winterReadiness: 0,
@@ -175,7 +177,8 @@ export function useRealtimeDashboard(garageId?: string) {
       availableVehicles: available,
       inServiceVehicles: inService,
       inMaintenanceVehicles: inMaintenance,
-      outOfServiceVehicles: vehiclesDown, // Total vehicles down (in maintenance + out of service)
+      outOfServiceVehicles: outOfService, // Vehicles with OUT_OF_SERVICE status
+      downVehicles: vehiclesDown, // Total vehicles down (in maintenance + out of service)
       availabilityRate,
       mechanicUtilization,
       winterReadiness,
