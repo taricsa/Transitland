@@ -52,16 +52,6 @@ export default function PartsClerkDashboard() {
     }
   };
 
-  const handleRestockSubmit = async (quantity: number) => {
-    if (!restockItem || !garageId) return;
-    try {
-      await restock(restockItem.id, garageId, quantity);
-      setRestockItem(null);
-    } catch (err) {
-      console.error('Error restocking:', err);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

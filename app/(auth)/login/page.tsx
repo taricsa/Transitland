@@ -36,6 +36,7 @@ export default function LoginPage() {
           .eq('id', authData.user.id)
           .single();
 
+        let redirectPath = '/dashboard';
         if (userData) {
           const typedUserData = userData as { role?: string };
           if (typedUserData.role) {
@@ -46,16 +47,11 @@ export default function LoginPage() {
               parts_clerk: '/clerk',
               driver: '/driver',
             };
-            router.push(dashboardMap[role] || '/dashboard');
-            router.refresh();
-          } else {
-            router.push('/dashboard');
-            router.refresh();
+            redirectPath = dashboardMap[role] || '/dashboard';
           }
-        } else {
-          router.push('/dashboard');
-          router.refresh();
         }
+        router.push(redirectPath);
+        router.refresh();
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');

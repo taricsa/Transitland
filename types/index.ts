@@ -54,7 +54,6 @@ export interface Garage {
 
 export interface User {
   id: string;
-  auth_id: string;
   role: UserRole;
   garage_id?: string;
   name: string;
