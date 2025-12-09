@@ -47,7 +47,7 @@ export default function SchedulePage() {
       .from('vehicles')
       .select('*')
       .eq('garage_id', gId)
-      .order('next_service_date', { ascending: true, nullsLast: true });
+      .order('next_service_date', { ascending: true, nullsFirst: false });
     if (data) {
       setVehicles(data as Vehicle[]);
     }
