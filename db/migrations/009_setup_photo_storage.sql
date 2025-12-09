@@ -33,13 +33,14 @@ USING (
 );
 
 -- Policy: Allow authenticated users to delete their own photos
+-- Security: Users can only delete photos they uploaded (checked via owner column)
 CREATE POLICY "Allow authenticated users to delete work order photos"
 ON storage.objects
 FOR DELETE
 TO authenticated
 USING (
   bucket_id = 'work-order-photos' AND
-  (storage.foldername(name))[1] = 'work-orders'
+  auth.uid() = owner
 );
 
 -- Note: The photo upload functionality in the app will:

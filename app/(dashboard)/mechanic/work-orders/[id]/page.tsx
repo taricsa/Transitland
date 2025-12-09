@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { WorkOrder, WorkOrderStatus, WorkOrderPart, InventoryItem, InventoryStock, Vehicle } from '@/types';
+import { WorkOrder, WorkOrderStatus, WorkOrderPart, InventoryItem, InventoryStock, Vehicle, WorkOrderEvent } from '@/types';
 import { useWorkOrders } from '@/lib/hooks/useWorkOrders';
 import { format } from 'date-fns';
 import { 
@@ -31,6 +31,7 @@ interface EnrichedWorkOrderPart extends WorkOrderPart {
 interface WorkOrderPhoto {
   id: string;
   url: string;
+  filePath: string;
   uploaded_at: string;
   uploaded_by?: string;
 }
@@ -105,34 +106,32 @@ export default function WorkOrderDetailPage() {
 
       if (partsError) throw partsError;
 
-      if (workOrderPartsData) {
+      if (workOrderPartsData && workOrderPartsData.length > 0) {
         const typedParts = workOrderPartsData as WorkOrderPart[];
-        const partsWithDetails = await Promise.all(
-          typedParts.map(async (part) => {
-            const { data: itemData } = await supabase
-              .from('inventory_items')
-              .select('*')
-              .eq('id', part.inventory_item_id)
-              .single();
+        const itemIds = typedParts.map((p) => p.inventory_item_id);
 
-            const { data: stockData } = await supabase
-              .from('inventory_stock')
-              .select('*')
-              .eq('inventory_item_id', part.inventory_item_id)
-              .eq('garage_id', garageId)
-              .single();
+        // Fetch all item and stock details in bulk (fixes N+1 query problem)
+        const [{ data: itemsData }, { data: stockData }] = await Promise.all([
+          supabase.from('inventory_items').select('*').in('id', itemIds),
+          supabase.from('inventory_stock').select('*').in('inventory_item_id', itemIds).eq('garage_id', garageId),
+        ]);
 
-            return {
-              ...part,
-              item: (itemData || undefined) as InventoryItem | undefined,
-              stock: (stockData || undefined) as InventoryStock | undefined,
-            };
-          })
-        );
+        const itemsById = new Map((itemsData || []).map((item: any) => [item.id, item as InventoryItem]));
+        const stockByItemId = new Map((stockData || []).map((stock: any) => [stock.inventory_item_id, stock as InventoryStock]));
+
+        const partsWithDetails = typedParts.map((part) => ({
+          ...part,
+          item: itemsById.get(part.inventory_item_id) as InventoryItem | undefined,
+          stock: stockByItemId.get(part.inventory_item_id) as InventoryStock | undefined,
+        }));
+
         setParts(partsWithDetails);
+      } else {
+        setParts([]);
       }
     } catch (err: any) {
       console.error('Error loading parts:', err);
+      setError(err.message || 'Failed to load parts information.');
     }
   }, [workOrderId, garageId, supabase]);
 
@@ -151,17 +150,19 @@ export default function WorkOrderDetailPage() {
       if (eventsError) throw eventsError;
 
       if (photoEvents) {
-        const photoList: WorkOrderPhoto[] = photoEvents.map((event: any) => ({
+        const photoList: WorkOrderPhoto[] = (photoEvents as WorkOrderEvent[]).map((event) => ({
           id: event.id,
           url: event.metadata?.url || event.metadata?.photo_url || '',
+          filePath: event.metadata?.file_path || '',
           uploaded_at: event.timestamp,
           uploaded_by: event.user_id,
-        })).filter((photo: WorkOrderPhoto) => photo.url); // Filter out invalid photos
+        })).filter((photo: WorkOrderPhoto) => photo.url && photo.filePath); // Filter out invalid photos
 
         setPhotos(photoList);
       }
     } catch (err: any) {
       console.error('Error loading photos:', err);
+      setError(err.message || 'Failed to load photos.');
     }
   }, [workOrderId, supabase]);
 
@@ -276,6 +277,9 @@ export default function WorkOrderDetailPage() {
     try {
       setUpdating(true);
       setError(null);
+      // Note: Using type cast due to Supabase TypeScript type inference limitations
+      // The insert operation is type-safe at runtime, but TypeScript cannot infer
+      // the correct types for the work_order_parts table insert operation
       const { error: insertError } = await (supabase as any)
         .from('work_order_parts')
         .insert({
@@ -343,6 +347,9 @@ export default function WorkOrderDetailPage() {
         .getPublicUrl(filePath);
 
       // Create work_order_event for photo
+      // Note: Using type cast due to Supabase TypeScript type inference limitations
+      // The insert operation is type-safe at runtime, but TypeScript cannot infer
+      // the correct types for the work_order_events table insert operation
       const { error: eventError } = await (supabase as any)
         .from('work_order_events')
         .insert({
@@ -367,17 +374,14 @@ export default function WorkOrderDetailPage() {
     }
   };
 
-  const handleDeletePhoto = async (photoId: string, photoUrl: string) => {
-    if (!workOrder) return;
+  const handleDeletePhoto = async (photoId: string, filePath: string) => {
+    if (!workOrder || !filePath) return;
 
     try {
       setUpdating(true);
       setError(null);
 
-      // Extract file path from URL and delete from storage
-      const urlParts = photoUrl.split('/');
-      const filePath = urlParts.slice(urlParts.indexOf('work-order-photos') + 1).join('/');
-      
+      // Delete file from storage using the direct file path from metadata
       const { error: deleteError } = await supabase.storage
         .from('work-order-photos')
         .remove([filePath]);
@@ -633,7 +637,7 @@ export default function WorkOrderDetailPage() {
                         className="w-full h-48 object-cover rounded-lg border border-gray-200"
                       />
                       <button
-                        onClick={() => handleDeletePhoto(photo.id, photo.url)}
+                        onClick={() => handleDeletePhoto(photo.id, photo.filePath)}
                         disabled={updating}
                         className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                       >
