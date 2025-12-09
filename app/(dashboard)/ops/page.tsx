@@ -196,9 +196,9 @@ export default function OpsDashboard() {
                 </div>
                 <div className="p-3 rounded-xl bg-blue-50 text-blue-600"><TruckIcon className="w-6 h-6" /></div>
               </div>
-              <p className="mt-4 text-sm font-medium text-slate-600">
-                {metrics?.outOfServiceVehicles || 0} vehicles down
-              </p>
+                  <p className="mt-4 text-sm font-medium text-slate-600">
+                    {metrics?.downVehicles || 0} vehicles down
+                  </p>
               <div className="absolute bottom-0 left-0 h-1 w-0 bg-blue-500 transition-all group-hover:w-full" />
             </div>
 

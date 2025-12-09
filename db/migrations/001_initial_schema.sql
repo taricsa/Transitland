@@ -19,7 +19,6 @@ CREATE TABLE garages (
 -- Users table (Identity - extends Supabase auth.users)
 CREATE TABLE users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    auth_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
     role VARCHAR(50) NOT NULL CHECK (role IN ('mechanic', 'ops_manager', 'parts_clerk', 'driver')),
     garage_id UUID REFERENCES garages(id) ON DELETE SET NULL,
     name VARCHAR(255) NOT NULL,

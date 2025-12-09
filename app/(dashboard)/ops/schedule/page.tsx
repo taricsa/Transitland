@@ -61,7 +61,7 @@ export default function SchedulePage() {
       .eq('garage_id', gId);
     
     if (garageVehicles && garageVehicles.length > 0) {
-      const vehicleIds = garageVehicles.map((v: any) => v.id);
+      const vehicleIds = garageVehicles.map((v: { id: string }) => v.id);
       const { data } = await (supabase as any)
         .from('work_orders')
         .select('*')

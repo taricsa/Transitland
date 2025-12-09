@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Vehicle, WorkOrder, VehicleStatus, Garage } from '@/types';
@@ -34,11 +34,7 @@ export default function VehicleManagementPage() {
   const [error, setError] = useState<string | null>(null);
   const [validNextStates, setValidNextStates] = useState<VehicleStatus[]>([]);
 
-  useEffect(() => {
-    loadVehicleData();
-  }, [vehicleId]);
-
-  const loadVehicleData = async () => {
+  const loadVehicleData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -75,7 +71,11 @@ export default function VehicleManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [vehicleId, supabase]);
+
+  useEffect(() => {
+    loadVehicleData();
+  }, [loadVehicleData]);
 
   const handleStatusChange = async (newStatus: VehicleStatus) => {
     if (!vehicle) return;
