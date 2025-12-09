@@ -112,8 +112,7 @@ export default function OpsDashboard() {
   };
 
   const handleVehicleManage = (vehicleId: string) => {
-    // TODO: Implement vehicle management
-    console.log('Manage vehicle:', vehicleId);
+    router.push(`/ops/vehicles/${vehicleId}`);
   };
 
   return (
