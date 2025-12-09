@@ -275,12 +275,14 @@ export default function WorkOrderDetailPage() {
     try {
       setUpdating(true);
       setError(null);
-      const { error: insertError } = await supabase.from('work_order_parts').insert({
-        work_order_id: workOrder.id,
-        inventory_item_id: selectedNewPart,
-        quantity: newPartQuantity,
-        garage_id: garageId,
-      });
+      const { error: insertError } = await (supabase as any)
+        .from('work_order_parts')
+        .insert({
+          work_order_id: workOrder.id,
+          inventory_item_id: selectedNewPart,
+          quantity: newPartQuantity,
+          garage_id: garageId,
+        });
       if (insertError) throw insertError;
       
       setIsAddPartModalOpen(false);
