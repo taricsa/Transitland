@@ -79,12 +79,8 @@ BEGIN
     
     RETURN mechanic_id = work_order_assigned_mechanic_id;
     
-  ELSIF user_role = 'ops_manager' THEN
-    -- Ops managers can access work orders in their garage
-    RETURN user_garage_id = work_order_garage_id;
-    
-  ELSIF user_role = 'parts_clerk' THEN
-    -- Parts clerks can access work orders in their garage
+  ELSIF user_role IN ('ops_manager', 'parts_clerk') THEN
+    -- Ops managers and Parts clerks can access work orders in their garage
     RETURN user_garage_id = work_order_garage_id;
     
   ELSE

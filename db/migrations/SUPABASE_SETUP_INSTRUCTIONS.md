@@ -86,13 +86,13 @@ Expected result: Should return 3 policies (INSERT, SELECT, DELETE).
 - Check that the function was created: `\df can_access_work_order` in psql
 
 ### Error: "policy already exists"
-- Drop the existing policy first:
+- The migration script is now idempotent (it includes `DROP POLICY IF EXISTS`), so this error should not occur when running the latest full script. However, if you are running commands manually or using an older version, you can resolve this by dropping the policies first:
   ```sql
   DROP POLICY IF EXISTS "Allow authenticated users to upload work order photos" ON storage.objects;
   DROP POLICY IF EXISTS "Allow authenticated users to read work order photos" ON storage.objects;
   DROP POLICY IF EXISTS "Allow authenticated users to delete work order photos" ON storage.objects;
   ```
-- Then re-run the migration
+- Then, re-run the migration or the specific CREATE POLICY commands.
 
 ### Photos not accessible after upload
 - Verify the storage bucket name matches exactly: `work-order-photos`

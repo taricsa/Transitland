@@ -152,13 +152,33 @@ export default function WorkOrderDetailPage() {
       if (eventsError) throw eventsError;
 
       if (photoEvents) {
-        const photoList: WorkOrderPhoto[] = (photoEvents as WorkOrderEvent[]).map((event) => ({
-          id: event.id,
-          url: event.metadata?.url || event.metadata?.photo_url || '',
-          filePath: event.metadata?.file_path || '',
-          uploaded_at: event.timestamp,
-          uploaded_by: event.user_id,
-        })).filter((photo: WorkOrderPhoto) => photo.url && photo.filePath); // Filter out invalid photos
+        // Generate signed URLs for each photo (required for private bucket)
+        const photoListPromises = (photoEvents as WorkOrderEvent[]).map(async (event) => {
+          const filePath = event.metadata?.file_path || '';
+          if (!filePath) return null;
+
+          // Generate signed URL (valid for 1 hour)
+          const { data: signedUrlData, error: urlError } = await supabase.storage
+            .from('work-order-photos')
+            .createSignedUrl(filePath, 3600); // 1 hour expiry
+
+          if (urlError) {
+            console.error('Error generating signed URL for photo:', urlError);
+            return null;
+          }
+
+          return {
+            id: event.id,
+            url: signedUrlData.signedUrl,
+            filePath: filePath,
+            uploaded_at: event.timestamp,
+            uploaded_by: event.user_id,
+          } as WorkOrderPhoto;
+        });
+
+        const photoList = (await Promise.all(photoListPromises)).filter(
+          (photo): photo is WorkOrderPhoto => photo !== null
+        );
 
         setPhotos(photoList);
       }
@@ -343,12 +363,9 @@ export default function WorkOrderDetailPage() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('work-order-photos')
-        .getPublicUrl(filePath);
-
       // Create work_order_event for photo
+      // Store only file_path in metadata (not public URL, since bucket is private)
+      // Signed URLs will be generated on-demand in loadPhotos()
       // Note: Using type cast due to Supabase TypeScript type inference limitations
       // The insert operation is type-safe at runtime, but TypeScript cannot infer
       // the correct types for the work_order_events table insert operation
@@ -359,7 +376,6 @@ export default function WorkOrderDetailPage() {
           event_type: 'Photo Added',
           user_id: user.id,
           metadata: {
-            url: publicUrl,
             file_name: file.name,
             file_path: filePath,
           },
