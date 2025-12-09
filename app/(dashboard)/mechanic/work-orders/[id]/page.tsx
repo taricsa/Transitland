@@ -105,8 +105,9 @@ export default function WorkOrderDetailPage() {
       if (partsError) throw partsError;
 
       if (workOrderPartsData) {
+        const typedParts = workOrderPartsData as WorkOrderPart[];
         const partsWithDetails = await Promise.all(
-          workOrderPartsData.map(async (part) => {
+          typedParts.map(async (part) => {
             const { data: itemData } = await supabase
               .from('inventory_items')
               .select('*')
