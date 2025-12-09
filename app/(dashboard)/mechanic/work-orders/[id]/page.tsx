@@ -1,6 +1,7 @@
 'use client';
 
 export const dynamic = 'force-dynamic';
+// Work order detail page for mechanics
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
