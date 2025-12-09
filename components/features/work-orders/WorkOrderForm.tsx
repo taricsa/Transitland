@@ -36,8 +36,9 @@ export function WorkOrderForm({ vehicleId, onSuccess }: WorkOrderFormProps) {
   const [loading, setLoading] = useState(false);
 
   // Get vehicleId and type from props or URL params
-  const urlVehicleId = searchParams?.get('vehicleId') || vehicleId || '';
-  const urlType = searchParams?.get('type') || '';
+  // searchParams is guaranteed to be available when wrapped in Suspense
+  const urlVehicleId = searchParams.get('vehicleId') || vehicleId || '';
+  const urlType = searchParams.get('type') || '';
 
   const {
     register,

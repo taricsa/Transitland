@@ -2,9 +2,14 @@
 
 export const dynamic = 'force-dynamic';
 
+import { Suspense } from 'react';
 import { WorkOrderForm } from '@/components/features/work-orders/WorkOrderForm';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
+
+function WorkOrderFormWrapper() {
+  return <WorkOrderForm />;
+}
 
 export default function NewWorkOrderPage() {
   const router = useRouter();
@@ -22,7 +27,9 @@ export default function NewWorkOrderPage() {
 
         <div className="rounded-lg bg-white shadow-sm p-6">
           <h1 className="text-2xl font-bold text-slate-900 mb-6">Create New Work Order</h1>
-          <WorkOrderForm />
+          <Suspense fallback={<div className="text-slate-500">Loading form...</div>}>
+            <WorkOrderFormWrapper />
+          </Suspense>
         </div>
       </div>
     </div>
