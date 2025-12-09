@@ -583,7 +583,7 @@ export default function WorkOrderDetailPage() {
                   </p>
                   <button
                     onClick={() => {
-                      updateWorkOrder(workOrder.id, { assigned_mechanic_id: null });
+                      updateWorkOrder(workOrder.id, { assigned_mechanic_id: undefined });
                       setWorkOrder({ ...workOrder, assigned_mechanic_id: undefined });
                     }}
                     className="w-full px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 text-sm font-medium"
