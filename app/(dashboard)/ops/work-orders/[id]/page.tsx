@@ -206,7 +206,8 @@ export default function WorkOrderDetailPage() {
       // If closing, set closed_at
       if (newStatus === WorkOrderStatus.CLOSED) {
         updates.closed_at = new Date().toISOString();
-      } else if (workOrder.status === WorkOrderStatus.CLOSED && newStatus !== WorkOrderStatus.CLOSED) {
+      } else if (workOrder.status === WorkOrderStatus.CLOSED) {
+        // If reopening a closed work order, clear closed_at
         updates.closed_at = undefined;
       }
 
