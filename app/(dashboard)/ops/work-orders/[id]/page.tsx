@@ -103,8 +103,8 @@ export default function WorkOrderDetailPage() {
 
             return {
               ...part,
-              item: itemData as InventoryItem | undefined,
-              stock: stockData as InventoryStock | undefined,
+              item: (itemData || undefined) as InventoryItem | undefined,
+              stock: (stockData || undefined) as InventoryStock | undefined,
             };
           })
         );
