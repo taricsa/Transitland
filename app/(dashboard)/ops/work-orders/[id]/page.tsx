@@ -204,9 +204,9 @@ export default function WorkOrderDetailPage() {
       const updates: Partial<WorkOrder> = { status: newStatus };
       
       // If closing, set closed_at
-      if (newStatus === 'Closed') {
+      if (newStatus === WorkOrderStatus.CLOSED) {
         updates.closed_at = new Date().toISOString();
-      } else if (workOrder.status === 'Closed' && newStatus !== 'Closed') {
+      } else if (workOrder.status === WorkOrderStatus.CLOSED && newStatus !== WorkOrderStatus.CLOSED) {
         updates.closed_at = undefined;
       }
 
