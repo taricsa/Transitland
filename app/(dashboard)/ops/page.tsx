@@ -9,7 +9,8 @@ import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { SyncStatus } from '@/components/ui/SyncStatus';
 import { handleLogout } from '@/lib/utils/logout';
-import { WorkOrder, Vehicle, WorkOrderPriority } from '@/types';
+import { WorkOrder, Vehicle, WorkOrderPriority, Garage, Mechanic } from '@/types';
+import { WorkOrderAssignmentModal } from '@/components/features/work-orders/WorkOrderAssignmentModal';
 
 // Icons
 import { 
@@ -19,19 +20,37 @@ import {
   CalendarIcon, 
   MagnifyingGlassIcon,
   PlusIcon,
-  ArrowRightOnRectangleIcon
+  ArrowRightOnRectangleIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 
 export default function OpsDashboard() {
   const router = useRouter();
   const supabase = createClient();
   const [garageId, setGarageId] = useState<string | undefined>();
+  const [selectedGarageId, setSelectedGarageId] = useState<string | undefined>();
+  const [garages, setGarages] = useState<Garage[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [assigningWorkOrder, setAssigningWorkOrder] = useState<WorkOrder | null>(null);
 
   // 1. Preserve Existing Data Fetching
-  const { vehicles, workOrders, mechanics, metrics, loading } = useRealtimeDashboard(garageId);
+  const { vehicles, workOrders, mechanics, metrics, loading } = useRealtimeDashboard(selectedGarageId);
 
-  // 2. Preserve Garage Context Logic
+  // 2. Load garages and set initial garage context
+  useEffect(() => {
+    async function loadGarages() {
+      const { data: garagesData } = await supabase
+        .from('garages')
+        .select('*')
+        .order('name');
+      if (garagesData) {
+        setGarages(garagesData as Garage[]);
+      }
+    }
+    loadGarages();
+  }, [supabase]);
+
+  // 3. Preserve Garage Context Logic (for initial user garage)
   useEffect(() => {
     async function getGarageId() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -45,6 +64,10 @@ export default function OpsDashboard() {
           const typedUserData = userData as { garage_id?: string | null };
           if (typedUserData.garage_id) {
             setGarageId(typedUserData.garage_id);
+            // Set as initial selected garage if none selected yet
+            if (!selectedGarageId) {
+              setSelectedGarageId(typedUserData.garage_id);
+            }
           }
         }
       }
@@ -76,12 +99,16 @@ export default function OpsDashboard() {
     : [];
 
   const handleNewWorkOrder = () => {
-    router.push('/mechanic/work-orders/new');
+    router.push('/ops/work-orders/new');
   };
 
-  const handleAssignWorkOrder = (workOrderId: string) => {
-    // TODO: Implement work order assignment
-    router.push(`/mechanic/work-orders/${workOrderId}`);
+  const handleAssignWorkOrder = (workOrder: WorkOrder) => {
+    setAssigningWorkOrder(workOrder);
+  };
+
+  const handleAssignmentSuccess = () => {
+    // Refresh data will happen automatically via real-time subscriptions
+    setAssigningWorkOrder(null);
   };
 
   const handleVehicleManage = (vehicleId: string) => {
@@ -95,9 +122,29 @@ export default function OpsDashboard() {
       
       {/* HEADER: Context & Global Actions */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Control Tower</h1>
-          <p className="text-slate-500">Real-time Operations Command • {garageId ? `Garage ${garageId.slice(0, 8)}...` : 'Loading Context...'}</p>
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Control Tower</h1>
+            <p className="text-slate-500">Real-time Operations Command</p>
+          </div>
+          {/* Garage Selector */}
+          <div className="mt-6 md:mt-0">
+            <select
+              value={selectedGarageId || 'all'}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedGarageId(value === 'all' ? undefined : value);
+              }}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">All Garages</option>
+              {garages.map((garage) => (
+                <option key={garage.id} value={garage.id}>
+                  {garage.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
@@ -107,10 +154,7 @@ export default function OpsDashboard() {
 
           <button 
             className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-700 font-medium hover:bg-slate-50 shadow-sm transition-all"
-            onClick={() => {
-              // TODO: Implement schedule planning
-              console.log('Plan Schedule');
-            }}
+            onClick={() => router.push('/ops/schedule')}
           >
             <CalendarIcon className="w-5 h-5" />
             <span className="hidden sm:inline">Plan Schedule</span>
@@ -172,18 +216,18 @@ export default function OpsDashboard() {
               <div className="absolute bottom-0 left-0 h-1 w-0 bg-red-500 transition-all group-hover:w-full" />
             </div>
 
-            {/* Winter Readiness */}
+            {/* MTTR (Mean Time To Repair) */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 cursor-pointer hover:border-indigo-400 transition-all group relative overflow-hidden">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-slate-500">Winter Readiness</p>
+                  <p className="text-sm font-medium text-slate-500">Mean Time To Repair</p>
                   <h3 className="text-3xl font-black text-slate-900 mt-2">
-                    {metrics?.winterReadiness ? `${Math.round(metrics.winterReadiness)}%` : '0%'}
+                    {metrics?.mttr ? `${metrics.mttr.toFixed(1)} hrs` : 'N/A'}
                   </h3>
                 </div>
-                <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600"><CalendarIcon className="w-6 h-6" /></div>
+                <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600"><ClockIcon className="w-6 h-6" /></div>
               </div>
-              <p className="mt-4 text-sm font-medium text-slate-600">Campaign Active</p>
+              <p className="mt-4 text-sm font-medium text-slate-600">Average repair time</p>
               <div className="absolute bottom-0 left-0 h-1 w-0 bg-indigo-500 transition-all group-hover:w-full" />
             </div>
 
@@ -248,7 +292,7 @@ export default function OpsDashboard() {
                           className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAssignWorkOrder(task.id);
+                            handleAssignWorkOrder(task);
                           }}
                         >
                           Assign →
@@ -353,6 +397,17 @@ export default function OpsDashboard() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Work Order Assignment Modal */}
+      {assigningWorkOrder && (
+        <WorkOrderAssignmentModal
+          workOrder={assigningWorkOrder}
+          mechanics={mechanics || []}
+          garageId={selectedGarageId}
+          onClose={() => setAssigningWorkOrder(null)}
+          onSuccess={handleAssignmentSuccess}
+        />
       )}
     </div>
   );
