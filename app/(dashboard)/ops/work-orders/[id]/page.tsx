@@ -50,18 +50,20 @@ export default function WorkOrderDetailPage() {
         .single();
 
       if (error) throw error;
-      setWorkOrder(data as WorkOrder);
+      const typedWorkOrder = data as WorkOrder;
+      setWorkOrder(typedWorkOrder);
 
       // Load vehicle
-      if (data.vehicle_id) {
+      if (typedWorkOrder.vehicle_id) {
         const { data: vehicleData } = await supabase
           .from('vehicles')
           .select('*')
-          .eq('id', data.vehicle_id)
+          .eq('id', typedWorkOrder.vehicle_id)
           .single();
         if (vehicleData) {
           setVehicle(vehicleData);
-          setGarageId(vehicleData.garage_id);
+          const typedVehicle = vehicleData as { garage_id: string };
+          setGarageId(typedVehicle.garage_id);
         }
       }
     } catch (err) {
