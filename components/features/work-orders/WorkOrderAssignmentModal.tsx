@@ -16,7 +16,7 @@ interface WorkOrderAssignmentModalProps {
 
 export function WorkOrderAssignmentModal({
   workOrder,
-  mechanics,
+  mechanics: propsMechanics,
   garageId,
   onClose,
   onSuccess,
@@ -27,6 +27,47 @@ export function WorkOrderAssignmentModal({
   const { updateWorkOrder } = useWorkOrders();
   const supabase = createClient();
   const [mechanicNames, setMechanicNames] = useState<Record<string, string>>({});
+  const [mechanics, setMechanics] = useState<Mechanic[]>(propsMechanics || []);
+
+  // Load mechanics if not provided or if empty
+  useEffect(() => {
+    async function loadMechanics() {
+      // If mechanics are already provided and not empty, use them
+      if (propsMechanics && propsMechanics.length > 0) {
+        setMechanics(propsMechanics);
+        return;
+      }
+
+      // Otherwise, load mechanics directly
+      try {
+        let usersQuery = supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'mechanic');
+        
+        if (garageId) {
+          usersQuery = usersQuery.eq('garage_id', garageId);
+        }
+
+        const { data: usersData } = await usersQuery;
+        
+        if (usersData && usersData.length > 0) {
+          const userIds = usersData.map((u: any) => u.id);
+          const { data: mechanicsData } = await (supabase as any)
+            .from('mechanics')
+            .select('*')
+            .in('user_id', userIds);
+          
+          if (mechanicsData) {
+            setMechanics(mechanicsData as Mechanic[]);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading mechanics:', err);
+      }
+    }
+    loadMechanics();
+  }, [propsMechanics, garageId, supabase]);
 
   // Load mechanic names
   useEffect(() => {
