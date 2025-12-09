@@ -149,7 +149,7 @@ export default function VehicleManagementPage() {
               className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900"
             >
               <ArrowLeftIcon className="h-4 w-4" />
-              Back to Control Tower
+              Back
             </button>
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Vehicle Management</h1>
@@ -263,7 +263,7 @@ export default function VehicleManagementPage() {
                   {workOrders.map((wo) => (
                     <div
                       key={wo.id}
-                      onClick={() => router.push(`/mechanic/work-orders/${wo.id}`)}
+                      onClick={() => router.push(`/ops/work-orders/${wo.id}`)}
                       className="p-4 border border-slate-200 rounded-lg hover:bg-slate-50 hover:border-blue-200 cursor-pointer transition-colors"
                     >
                       <div className="flex items-start justify-between">
