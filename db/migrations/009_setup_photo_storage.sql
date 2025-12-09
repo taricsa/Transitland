@@ -12,6 +12,11 @@
 
 -- 2. Storage Policies (run in Supabase SQL Editor)
 
+-- Drop existing policies if they exist (for idempotency)
+DROP POLICY IF EXISTS "Allow authenticated users to upload work order photos" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated users to read work order photos" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated users to delete work order photos" ON storage.objects;
+
 -- Policy: Allow authenticated users to upload photos
 CREATE POLICY "Allow authenticated users to upload work order photos"
 ON storage.objects
