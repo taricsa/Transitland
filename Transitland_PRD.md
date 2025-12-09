@@ -113,9 +113,14 @@ The application requires distinct interface modes ("Views") tailored to the spec
 #### **Feature 1: The "Control Tower" Dashboard (Ops Manager View)**
 
 * **Requirement:** Real-time visibility of Fleet Availability.  
-* **KPIs:** Available vs. Down, Mechanic Utilization %, Winter Readiness %.  
-* **Visual:** Interactive Garage Map (Green/Red dots).  
-* **Capacity Planning:** Calculate "Available Wrench Hours" (Staff \- Sick/Leave).
+* **KPIs:** Fleet Availability %, Critical Issues (unassigned P0/P1), Mean Time To Repair (MTTR), Active Mechanics count.  
+* **Visual:** Searchable Fleet Status table with vehicle details and quick actions.  
+* **Garage Filtering:** Dropdown selector to filter all dashboard data by garage (All, North, South).  
+* **Triage Queue:** Real-time list of unassigned critical work orders requiring immediate attention.  
+* **Work Order Assignment:** Modal interface to assign work orders to mechanics with garage-based filtering.  
+* **Schedule Planning:** Dedicated page for preventive maintenance scheduling and work order time slot management.  
+* **Vehicle Management:** Individual vehicle detail pages with status updates, work order history, and quick actions.  
+* **Work Order Detail:** Comprehensive work order pages with editable fields, parts tracking, hours management, and mechanic assignment.
 
 #### **Feature 2: Offline-First Work Order Management (Mechanic View)**
 
@@ -197,7 +202,7 @@ One of the most critical things of the App are the metrics.
 * **Fleet Availability:** Weekly average of buses in "Available" status  
 * **Preventive vs. Reactive Ratio:** % of preventive maintenance work orders  
 * **Maintenance Cost Per Mile:** Total maintenance spend / fleet mileage  
-* **Mean Time To Repair (MTTR):** Average hours from issue log to completion
+* **Mean Time To Repair (MTTR):** Average hours from issue log to completion (Implemented: Calculated from closed work orders with actual_hours)
 
 ### **6.4 Business Impact Metrics (90-Day)**
 

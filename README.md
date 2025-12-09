@@ -30,9 +30,14 @@ Transitland Fleet OS is designed to shift fleet operations from reactive firefig
 
 2. **Operations Manager View (Control Tower)**
    - Real-time fleet availability dashboard
-   - KPI cards (Availability %, Mechanic Utilization %, Winter Readiness %)
-   - Interactive garage status map
-   - Mechanic roster
+   - KPI cards (Fleet Availability %, Critical Issues, MTTR, Active Mechanics)
+   - Garage selector for filtering by location (All, North, South)
+   - Triage queue for unassigned critical work orders (P0/P1)
+   - Searchable fleet status table with vehicle management
+   - Work order assignment to mechanics
+   - Schedule planning for preventive maintenance and work order time slots
+   - Vehicle detail pages with status updates and work order management
+   - Comprehensive work order detail pages with parts tracking and hours management
 
 3. **Parts Clerk View (Warehouse View)**
    - Inventory grid with real-time stock tracking
@@ -54,6 +59,10 @@ Transitland Fleet OS is designed to shift fleet operations from reactive firefig
 - **Vehicle State Machine**: Enforced state transitions
 - **Inventory Management**: Real-time stock tracking with auto-decrement
 - **User Authentication**: Secure login/logout with role-based access control
+- **Work Order Management**: Full CRUD operations with assignment, status tracking, and parts management
+- **Schedule Planning**: Preventive maintenance scheduling and work order time slot management
+- **Vehicle Management**: Individual vehicle detail pages with status updates and work order history
+- **MTTR Tracking**: Mean Time To Repair calculation from closed work orders
 - **Demo Data**: Comprehensive seed scripts for testing and demos
 
 ## Getting Started
@@ -149,7 +158,11 @@ npm run dev
   /(auth)          - Authentication routes
   /(dashboard)    - Protected routes
     /mechanic     - Mechanic view
+      /work-orders - Work order management
     /ops          - Operations manager view
+      /work-orders - Work order management and assignment
+      /vehicles    - Vehicle detail and management
+      /schedule    - Schedule planning
     /clerk        - Parts clerk view
     /driver       - Driver view
 /components
