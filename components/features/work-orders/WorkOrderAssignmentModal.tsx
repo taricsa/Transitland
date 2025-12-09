@@ -42,11 +42,12 @@ export function WorkOrderAssignmentModal({
         .in('id', userIds);
 
       if (usersData) {
+        const typedUsersData = usersData as Array<{ id: string; name?: string | null }>;
         const names: Record<string, string> = {};
         mechanics.forEach((mechanic) => {
-          const user = usersData.find((u) => u.id === mechanic.user_id);
-          if (user && 'name' in user) {
-            names[mechanic.id] = user.name as string;
+          const user = typedUsersData.find((u) => u.id === mechanic.user_id);
+          if (user && user.name) {
+            names[mechanic.id] = user.name;
           }
         });
         setMechanicNames(names);
