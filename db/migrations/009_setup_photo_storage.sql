@@ -29,64 +29,29 @@ WITH CHECK (
 
 -- Function: Check if user has access to a work order
 -- Security: Uses SECURITY DEFINER to check work order permissions
+-- Performance: Optimized to use a single query for RLS policy efficiency
 CREATE OR REPLACE FUNCTION can_access_work_order(work_order_uuid UUID, user_uuid UUID)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
-DECLARE
-  user_role VARCHAR(50);
-  user_garage_id UUID;
-  mechanic_id UUID;
-  work_order_garage_id UUID;
-  work_order_assigned_mechanic_id UUID;
 BEGIN
-  -- Get user role and garage
-  SELECT role, garage_id INTO user_role, user_garage_id
-  FROM users
-  WHERE id = user_uuid;
-
-  IF user_role IS NULL THEN
-    RETURN FALSE;
-  END IF;
-
-  -- Get work order details
-  SELECT 
-    v.garage_id,
-    wo.assigned_mechanic_id
-  INTO 
-    work_order_garage_id,
-    work_order_assigned_mechanic_id
-  FROM work_orders wo
-  JOIN vehicles v ON wo.vehicle_id = v.id
-  WHERE wo.id = work_order_uuid;
-
-  IF work_order_garage_id IS NULL THEN
-    RETURN FALSE;
-  END IF;
-
-  -- Check access based on role
-  IF user_role = 'mechanic' THEN
-    -- Mechanics can access work orders assigned to them
-    IF work_order_assigned_mechanic_id IS NULL THEN
-      RETURN FALSE;
-    END IF;
-    
-    SELECT id INTO mechanic_id
-    FROM mechanics
-    WHERE user_id = user_uuid;
-    
-    RETURN mechanic_id = work_order_assigned_mechanic_id;
-    
-  ELSIF user_role IN ('ops_manager', 'parts_clerk') THEN
-    -- Ops managers and Parts clerks can access work orders in their garage
-    RETURN user_garage_id = work_order_garage_id;
-    
-  ELSE
-    -- Other roles (drivers, etc.) don't have access to work order photos
-    RETURN FALSE;
-  END IF;
+  -- This function is called frequently by RLS policies and is optimized into a single query for performance.
+  RETURN EXISTS (
+    SELECT 1
+    FROM users u
+    JOIN work_orders wo ON wo.id = work_order_uuid
+    JOIN vehicles v ON v.id = wo.vehicle_id
+    WHERE
+      u.id = user_uuid AND (
+        -- Ops managers and parts clerks can access work orders in their garage.
+        (u.role IN ('ops_manager', 'parts_clerk') AND u.garage_id = v.garage_id)
+        OR
+        -- Mechanics can access work orders assigned to them.
+        (u.role = 'mechanic' AND wo.assigned_mechanic_id = (SELECT m.id FROM mechanics m WHERE m.user_id = u.id))
+      )
+  );
 END;
 $$;
 

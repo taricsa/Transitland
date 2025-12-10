@@ -152,35 +152,51 @@ export default function WorkOrderDetailPage() {
       if (eventsError) throw eventsError;
 
       if (photoEvents) {
-        // Generate signed URLs for each photo (required for private bucket)
-        const photoListPromises = (photoEvents as WorkOrderEvent[]).map(async (event) => {
-          const filePath = event.metadata?.file_path || '';
-          if (!filePath) return null;
+        const photoEventsTyped = (photoEvents as WorkOrderEvent[]);
+        const filePaths = photoEventsTyped
+          .map((event) => event.metadata?.file_path as string | undefined)
+          .filter((path): path is string => !!path);
 
-          // Generate signed URL (valid for 1 hour)
-          const { data: signedUrlData, error: urlError } = await supabase.storage
+        if (filePaths.length > 0) {
+          // Generate signed URLs in a single batch request (better performance)
+          const { data: signedUrlsData, error: urlsError } = await supabase.storage
             .from('work-order-photos')
-            .createSignedUrl(filePath, 3600); // 1 hour expiry
+            .createSignedUrls(filePaths, 3600); // 1 hour expiry
 
-          if (urlError) {
-            console.error('Error generating signed URL for photo:', urlError);
-            return null;
+          if (urlsError) {
+            console.error('Error generating signed URLs for photos:', urlsError);
+            setPhotos([]);
+            return;
           }
 
-          return {
-            id: event.id,
-            url: signedUrlData.signedUrl,
-            filePath: filePath,
-            uploaded_at: event.timestamp,
-            uploaded_by: event.user_id,
-          } as WorkOrderPhoto;
-        });
+          // Create a map of file paths to signed URLs for quick lookup
+          const signedUrlMap = new Map(
+            signedUrlsData.map(({ signedUrl, path }) => [path, signedUrl])
+          );
 
-        const photoList = (await Promise.all(photoListPromises)).filter(
-          (photo): photo is WorkOrderPhoto => photo !== null
-        );
+          // Map photo events to photo objects using the signed URL map
+          const photoList = photoEventsTyped
+            .map((event) => {
+              const filePath = event.metadata?.file_path as string | undefined;
+              if (!filePath) return null;
 
-        setPhotos(photoList);
+              const signedUrl = signedUrlMap.get(filePath);
+              if (!signedUrl) return null;
+
+              return {
+                id: event.id,
+                url: signedUrl,
+                filePath: filePath,
+                uploaded_at: event.timestamp,
+                uploaded_by: event.user_id,
+              } as WorkOrderPhoto;
+            })
+            .filter((photo): photo is WorkOrderPhoto => photo !== null);
+
+          setPhotos(photoList);
+        } else {
+          setPhotos([]);
+        }
       }
     } catch (err: any) {
       console.error('Error loading photos:', err);
