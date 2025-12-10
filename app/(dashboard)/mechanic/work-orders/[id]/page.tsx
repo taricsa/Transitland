@@ -116,8 +116,10 @@ export default function WorkOrderDetailPage() {
           supabase.from('inventory_stock').select('*').in('inventory_item_id', itemIds).eq('garage_id', garageId),
         ]);
 
-        const itemsById = new Map((itemsData || []).map((item: any) => [item.id, item as InventoryItem]));
-        const stockByItemId = new Map((stockData || []).map((stock: any) => [stock.inventory_item_id, stock as InventoryStock]));
+        const typedItems = (itemsData || []) as InventoryItem[];
+        const typedStock = (stockData || []) as InventoryStock[];
+        const itemsById = new Map(typedItems.map((item) => [item.id, item]));
+        const stockByItemId = new Map(typedStock.map((stock) => [stock.inventory_item_id, stock]));
 
         const partsWithDetails = typedParts.map((part) => ({
           ...part,
@@ -150,15 +152,51 @@ export default function WorkOrderDetailPage() {
       if (eventsError) throw eventsError;
 
       if (photoEvents) {
-        const photoList: WorkOrderPhoto[] = (photoEvents as WorkOrderEvent[]).map((event) => ({
-          id: event.id,
-          url: event.metadata?.url || event.metadata?.photo_url || '',
-          filePath: event.metadata?.file_path || '',
-          uploaded_at: event.timestamp,
-          uploaded_by: event.user_id,
-        })).filter((photo: WorkOrderPhoto) => photo.url && photo.filePath); // Filter out invalid photos
+        const photoEventsTyped = (photoEvents as WorkOrderEvent[]);
+        const filePaths = photoEventsTyped
+          .map((event) => event.metadata?.file_path as string | undefined)
+          .filter((path): path is string => !!path);
 
-        setPhotos(photoList);
+        if (filePaths.length > 0) {
+          // Generate signed URLs in a single batch request (better performance)
+          const { data: signedUrlsData, error: urlsError } = await supabase.storage
+            .from('work-order-photos')
+            .createSignedUrls(filePaths, 3600); // 1 hour expiry
+
+          if (urlsError) {
+            console.error('Error generating signed URLs for photos:', urlsError);
+            setPhotos([]);
+            return;
+          }
+
+          // Create a map of file paths to signed URLs for quick lookup
+          const signedUrlMap = new Map(
+            signedUrlsData.map(({ signedUrl, path }) => [path, signedUrl])
+          );
+
+          // Map photo events to photo objects using the signed URL map
+          const photoList = photoEventsTyped
+            .map((event) => {
+              const filePath = event.metadata?.file_path as string | undefined;
+              if (!filePath) return null;
+
+              const signedUrl = signedUrlMap.get(filePath);
+              if (!signedUrl) return null;
+
+              return {
+                id: event.id,
+                url: signedUrl,
+                filePath: filePath,
+                uploaded_at: event.timestamp,
+                uploaded_by: event.user_id,
+              } as WorkOrderPhoto;
+            })
+            .filter((photo): photo is WorkOrderPhoto => photo !== null);
+
+          setPhotos(photoList);
+        } else {
+          setPhotos([]);
+        }
       }
     } catch (err: any) {
       console.error('Error loading photos:', err);
@@ -341,12 +379,9 @@ export default function WorkOrderDetailPage() {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('work-order-photos')
-        .getPublicUrl(filePath);
-
       // Create work_order_event for photo
+      // Store only file_path in metadata (not public URL, since bucket is private)
+      // Signed URLs will be generated on-demand in loadPhotos()
       // Note: Using type cast due to Supabase TypeScript type inference limitations
       // The insert operation is type-safe at runtime, but TypeScript cannot infer
       // the correct types for the work_order_events table insert operation
@@ -357,7 +392,6 @@ export default function WorkOrderDetailPage() {
           event_type: 'Photo Added',
           user_id: user.id,
           metadata: {
-            url: publicUrl,
             file_name: file.name,
             file_path: filePath,
           },
