@@ -103,6 +103,7 @@ Fill in your Supabase and PowerSync credentials. The `.env.local` file has been 
       - Copy and paste the contents of `db/migrations/001_initial_schema.sql` and run it
       - Copy and paste the contents of `db/migrations/002_analytics_tables.sql` and run it
       - Copy and paste the contents of `db/migrations/003_functions_triggers.sql` and run it
+      - **Important**: For migration `009_setup_photo_storage.sql`, follow the manual setup instructions in `db/migrations/SUPABASE_SETUP_INSTRUCTIONS.md` (requires creating a storage bucket and running SQL policies)
    
    **Option B: Using Supabase CLI**
    ```bash
